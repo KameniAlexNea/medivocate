@@ -1,3 +1,5 @@
-# rag requirements
-langchain-ollama
-ollama
+tox
+pytest
+flake8
+black
+autopep8
