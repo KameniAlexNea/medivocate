@@ -1,0 +1,6 @@
+tox
+pytest
+flake8
+black
+autopep8
+PyMuPDF
