@@ -5,3 +5,8 @@ langchain-chroma
 langchain
 ollama
 chromadb
+
+# OCR
+pdf2image
+Pillow
+easyocr

@@ -76,7 +76,7 @@ def main():
     # Example usage with different file types and output formats
     examples = [
         {
-            "file": "/home/zeufack/programing/project/medivocate/reader/src/samples/fable.pdf",
+            "file": "src/samples/fable.pdf",
             "format": OutputFormat.TEXT,
         },
         # {"file": "../samples/letter.jpg", "format": OutputFormat.JSON},
