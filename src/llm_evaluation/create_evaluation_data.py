@@ -22,7 +22,7 @@ def generate_questions(input_folder: str, n_files: int, output_folder: str):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    files = glob(os.path.join(input_folder, "*.txt"))
+    files = glob(os.path.join(input_folder, "*.txt")) + glob(os.path.join(input_folder, "*/*.txt"))
     print(f"Found {len(files)} files in {input_folder}.")
 
     if len(files):
