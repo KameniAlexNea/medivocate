@@ -6,3 +6,4 @@ langchain
 ollama
 chromadb
 PyMuPDF
+tqdm

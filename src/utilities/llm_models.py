@@ -24,7 +24,9 @@ def get_llm_model_chat(
             # other params...
             base_url=os.getenv("OLLAMA_HOST"),
             client_kwargs={
-                "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
+                "headers": {
+                    "Authorization": "Bearer " + (os.getenv("OLLAMA_TOKEN") or "")
+                }
             },
         )
     return model_type.value(
@@ -39,6 +41,6 @@ def get_llm_model_embedding():
         model=os.getenv("OLLAM_EMB"),
         base_url=os.getenv("OLLAMA_HOST"),
         client_kwargs={
-            "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
+            "headers": {"Authorization": "Bearer " + (os.getenv("OLLAMA_TOKEN") or "")}
         },
     )

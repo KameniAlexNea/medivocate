@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
@@ -6,6 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_core.runnables import Runnable
 from tqdm import tqdm
 
 from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
@@ -23,8 +24,8 @@ class RAGSystem:
         self.batch_size = batch_size
         self.embeddings = self._get_embeddings()
         self.llm = self._get_llm()
-        self.vector_store = None
-        self.chain = None
+        self.vector_store: Optional[Chroma] = None
+        self.chain: Optional[Runnable] = None
 
     def _get_llm(self):
         return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
