@@ -1,13 +1,14 @@
-import os
 from typing import List
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.prompts import PromptTemplate
-from langchain_ollama import ChatOllama, OllamaEmbeddings
-from langchain_chroma import Chroma
-from langchain.chains.retrieval import create_retrieval_chain
+
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain.prompts import PromptTemplate
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from tqdm import tqdm
+
+from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
 
 
 class RAGSystem:
@@ -26,26 +27,11 @@ class RAGSystem:
         self.chain = None
 
     def _get_llm(self):
-        return ChatOllama(
-            model=os.getenv("OLLAMA_MODEL"),
-            temperature=0.1,
-            max_tokens=255,
-            # other params...
-            base_url=os.getenv("OLLAMA_HOST"),
-            client_kwargs={
-                "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
-            },
-        )
+        return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
 
     def _get_embeddings(self):
         """Initialize embeddings based on environment configuration"""
-        return OllamaEmbeddings(
-            model=os.getenv("OLLAM_EMB"),
-            base_url=os.getenv("OLLAMA_HOST"),
-            client_kwargs={
-                "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
-            },
-        )
+        return get_llm_model_embedding()
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
@@ -91,7 +77,7 @@ class RAGSystem:
         if self.chain is not None:
             return
         """Set up the RAG chain with custom prompt"""
-        prompt_template = """Use the following pieces of context to answer the question at the end. 
+        prompt_template = """Use the following pieces of context to answer the question at the end.
         If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
         Context: {context}
