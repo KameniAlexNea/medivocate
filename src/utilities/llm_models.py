@@ -2,9 +2,8 @@ import os
 from enum import Enum
 from typing import Union
 
-from langchain_community.embeddings import OllamaEmbeddings
 from langchain_groq import ChatGroq
-from langchain_ollama import ChatOllama
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 
 class LLMModel(Enum):
