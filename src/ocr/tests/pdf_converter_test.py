@@ -4,8 +4,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from src.enums.image_format import ImageFormat
-from src.enums.language import Language
+from src.enums.ocr_enum import ImageFormat, Language
 from src.utils.pdf_converter import PDFConverter
 
 
@@ -25,7 +24,7 @@ def converter():
     return PDFConverter(languages=[Language.ENG], dpi=200, fmt=ImageFormat.PNG)
 
 
-def test_pdf_conversion(converter, sample_pdf, output_dir):
+def test_pdf_conversion(converter: PDFConverter, sample_pdf, output_dir):
     images = converter.convert_pdf_to_images(sample_pdf, output_dir)
     assert len(images) > 0
     assert all(isinstance(img, Image.Image) for img in images)
@@ -44,12 +43,12 @@ def test_language_support():
     assert len(converter.get_supported_languages()) == len(langs)
 
 
-def test_invalid_pdf_path(converter):
+def test_invalid_pdf_path(converter: PDFConverter):
     with pytest.raises(FileNotFoundError):
         converter.convert_pdf_to_images("nonexistent.pdf")
 
 
-def test_page_range_conversion(converter, sample_pdf):
+def test_page_range_conversion(converter: PDFConverter, sample_pdf):
     images = converter.convert_pdf_to_images(sample_pdf, first_page=1, last_page=2)
     assert len(images) <= 2
 

@@ -10,7 +10,7 @@ import easyocr
 from ..config.ocr_config import OCRConfig
 from ..core.image_handler import ImageHandler
 from ..core.pdf_handler import PDFHandler, PDFPage
-from ..enums.outpy_format import OutputFormat
+from ..enums.ocr_enum import OutputFormat
 
 logger = logging.getLogger(__name__)
 

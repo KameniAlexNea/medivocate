@@ -95,7 +95,7 @@ class PDFHandler:
             # Convert pages in batches
             all_pages = []
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                page_batches = self._get_page_batches(pdf_path, batch_size, pages)
+                page_batches = self._get_page_batches(pdf_path, batch_size, pages, dpi)
 
                 for batch in page_batches:
                     future_pages = [
@@ -152,7 +152,7 @@ class PDFHandler:
 
     @staticmethod
     def _get_page_batches(
-        pdf_path: Path, batch_size: int, pages: Optional[List[int]] = None
+        pdf_path: Path, batch_size: int, pages: Optional[List[int]] = None, dpi=72
     ) -> List[List[int]]:
         """Split pages into batches for processing.
 
@@ -166,7 +166,7 @@ class PDFHandler:
         """
         if pages is None:
             # Get total page count
-            total_pages = len(convert_from_path(pdf_path, dpi=72))
+            total_pages = len(convert_from_path(pdf_path, dpi=dpi))
             pages = list(range(1, total_pages + 1))
 
         return [pages[i : i + batch_size] for i in range(0, len(pages), batch_size)]
