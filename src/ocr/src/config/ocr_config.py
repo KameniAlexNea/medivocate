@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.config.preprocessing_config import PreprocessingConfig
-from src.enums.language import Language
-from src.enums.outpy_format import OutputFormat
+from ..config.preprocessing_config import PreprocessingConfig
+from ..enums.ocr_enum import OutputFormat
 
 
 @dataclass
