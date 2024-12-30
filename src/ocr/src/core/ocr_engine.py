@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import easyocr
+from tqdm import tqdm
 
 from ..config.ocr_config import OCRConfig
 from ..core.image_handler import ImageHandler
@@ -112,13 +113,7 @@ class OCREngine:
         )
 
         with ThreadPoolExecutor(max_workers=self.config.batch_size) as executor:
-            futures = [
-                executor.submit(self._process_single_page, page) for page in pages
-            ]
-
-            results = []
-            for future in futures:
-                results.extend(future.result())
+            results = list(tqdm(executor.map(self._process_single_page, pages), total=len(pages)))
 
         return results
 

@@ -6,7 +6,7 @@ from glob import glob
 from tqdm import tqdm
 
 from src.config.ocr_config import OCRConfig
-from src.config.preprocessing_config import PreprocessingConfig
+from src.config.ocr_config import PreprocessingConfig
 from src.core.image_handler import ImageHandler
 from src.core.ocr_engine import OCREngine
 from src.core.pdf_handler import PDFHandler
@@ -84,18 +84,14 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="OCRize PDF Document")
     parser.add_argument(
         "--file_path",
+        default="/home/eak/Documents/AI/LLMChat/medivocate/data/documents/Books-20241230T221508Z-001/Books/Le Livre Des Morts Des Anciens egyptiens.pdf",
+        required=False,
         type=str,
         help="Path to the file or folder containing list of files",
     )
     parser.add_argument(
-        "--output_format", default="text", type=str, help="output format of OCR Document."
+        "--output_format", default="text", required=False, type=str, help="output format of OCR Document."
     )
-    # parser.add_argument(
-    #     "output_folder",
-    #     default="",
-    #     type=str,
-    #     help="Path to the folder where output files will be saved.",
-    # )
 
     args = parser.parse_args()
 

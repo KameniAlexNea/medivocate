@@ -1,8 +1,20 @@
 from dataclasses import dataclass
+from typing import Optional
 from pathlib import Path
 
-from ..config.preprocessing_config import PreprocessingConfig
 from ..enums.ocr_enum import OutputFormat
+
+
+@dataclass()
+class PreprocessingConfig:
+    """Configuration for image preprocessing steps."""
+
+    denoise: bool = True
+    deskew: bool = True
+    contrast_enhancement: bool = True
+    threshold: Optional[float] = None
+    resize_factor: Optional[float] = None
+
 
 
 @dataclass
