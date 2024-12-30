@@ -8,7 +8,7 @@ import numpy as np
 import numpy.typing as npt
 from pdf2image import convert_from_path
 
-from src.core.image_handler import ImageHandler
+from ..core.image_handler import ImageHandler
 
 logger = logging.getLogger(__name__)
 

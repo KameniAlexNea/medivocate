@@ -5,8 +5,7 @@ from typing import List, Optional, Union
 from pdf2image import convert_from_path
 from PIL import Image
 
-from src.enums.image_format import ImageFormat
-from src.enums.language import Language
+from ..enums.ocr_enum import ImageFormat, Language
 
 
 class PDFConverter:

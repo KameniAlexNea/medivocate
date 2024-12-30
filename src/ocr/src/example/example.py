@@ -1,13 +1,13 @@
+# examples/usage_example.py
 import logging
 
-from src.config.ocr_config import OCRConfig
-from src.config.preprocessing_config import PreprocessingConfig
-from src.core.image_handler import ImageHandler
-from src.core.ocr_engine import OCREngine
-from src.core.pdf_handler import PDFHandler
-from src.enums.language import Language
-from src.enums.outpy_format import OutputFormat
-from src.utils.preprocessing import ImagePreprocessor
+from ..config.ocr_config import OCRConfig
+from ..config.preprocessing_config import PreprocessingConfig
+from ..core.image_handler import ImageHandler
+from ..core.ocr_engine import OCREngine
+from ..core.pdf_handler import PDFHandler
+from ..enums.ocr_enum import OutputFormat
+from ..utils.preprocessing import ImagePreprocessor
 
 
 def setup_logging():
@@ -75,7 +75,7 @@ def main():
     # Example usage with different file types and output formats
     examples = [
         {
-            "file": "/home/zeufack/programing/project/medivocate/reader/src/samples/fable.pdf",
+            "file": "src/samples/fable.pdf",
             "format": OutputFormat.TEXT,
         },
         # {"file": "../samples/letter.jpg", "format": OutputFormat.JSON},

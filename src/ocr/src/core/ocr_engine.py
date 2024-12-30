@@ -1,4 +1,3 @@
-import json
 import logging
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
@@ -8,10 +7,10 @@ from typing import Dict, List, Optional, Union
 
 import easyocr
 
-from src.config.ocr_config import OCRConfig
-from src.core.image_handler import ImageHandler
-from src.core.pdf_handler import PDFHandler, PDFPage
-from src.enums.outpy_format import OutputFormat
+from ..config.ocr_config import OCRConfig
+from ..core.image_handler import ImageHandler
+from ..core.pdf_handler import PDFHandler, PDFPage
+from ..enums.outpy_format import OutputFormat
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +178,7 @@ class OCREngine:
 
     def _to_json(self, results: List[OCRResult]) -> str:
         import json
+
         output = {
             "pages": [
                 {
@@ -206,8 +206,7 @@ class OCREngine:
                 text_elem.text = text[1]
                 text_elem.set("confidence", str(text[2]))
                 bbox = text[0]
-                text_elem.set(
-                    "bbox", f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}")
+                text_elem.set("bbox", f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}")
         return ET.tostring(root, encoding="unicode", method="xml")
 
     def _to_text(self, results: List[OCRResult]) -> str:
@@ -287,7 +286,8 @@ class OCREngine:
             return float(result.bounding_box[0][1])
         except (IndexError, TypeError, ValueError) as e:
             raise ValueError(
-                f"Invalid bounding box data for result: {result}. Error: {e}")
+                f"Invalid bounding box data for result: {result}. Error: {e}"
+            )
 
     def _format_output(
         self, results: List[OCRResult], format_type: OutputFormat
