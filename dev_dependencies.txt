@@ -3,4 +3,5 @@ pytest
 flake8
 black
 autopep8
-PyMuPDF
+autoflake
+isort
