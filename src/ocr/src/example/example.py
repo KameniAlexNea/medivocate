@@ -1,4 +1,3 @@
-# examples/usage_example.py
 import logging
 
 from src.config.ocr_config import OCRConfig
