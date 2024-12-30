@@ -5,3 +5,5 @@ langchain-chroma
 langchain
 ollama
 chromadb
+PyMuPDF
+tqdm

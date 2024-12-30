@@ -1,12 +1,15 @@
-import os
-from typing import List
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains.retrieval_qa.base import RetrievalQA
+from typing import List, Optional
+
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
 from langchain.prompts import PromptTemplate
-from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_core.runnables import Runnable
 from tqdm import tqdm
+
+from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
 
 
 class RAGSystem:
@@ -21,29 +24,15 @@ class RAGSystem:
         self.batch_size = batch_size
         self.embeddings = self._get_embeddings()
         self.llm = self._get_llm()
-        self.vector_store = None
+        self.vector_store: Optional[Chroma] = None
+        self.chain: Optional[Runnable] = None
 
     def _get_llm(self):
-        return ChatOllama(
-            model=os.getenv("OLLAMA_MODEL"),
-            temperature=0.1,
-            max_tokens=255,
-            # other params...
-            base_url=os.getenv("OLLAMA_HOST"),
-            client_kwargs={
-                "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
-            },
-        )
+        return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
 
     def _get_embeddings(self):
         """Initialize embeddings based on environment configuration"""
-        return OllamaEmbeddings(
-            model=os.getenv("OLLAM_EMB"),
-            base_url=os.getenv("OLLAMA_HOST"),
-            client_kwargs={
-                "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
-            },
-        )
+        return get_llm_model_embedding()
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
@@ -86,40 +75,34 @@ class RAGSystem:
             )
 
     def setup_rag_chain(self):
+        if self.chain is not None:
+            return
         """Set up the RAG chain with custom prompt"""
-        prompt_template = """Use the following pieces of context to answer the question at the end. 
+        prompt_template = """Use the following pieces of context to answer the question at the end.
         If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
         Context: {context}
 
-        Question: {question}
+        Question: {input}
         Answer:"""
 
         prompt = PromptTemplate(
-            template=prompt_template, input_variables=["context", "question"]
+            template=prompt_template, input_variables=["context", "input"]
         )
+        retriever = self.vector_store.as_retriever(search_kwargs={"k": 7})
+        question_answer_chain = create_stuff_documents_chain(self.llm, prompt)
 
-        return RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=self.vector_store.as_retriever(search_kwargs={"k": 5}),
-            chain_type_kwargs={"prompt": prompt},
-            return_source_documents=True,
-        )
+        self.chain = create_retrieval_chain(retriever, question_answer_chain)
 
     def query(self, question: str):
         """Query the RAG system"""
         if not self.vector_store:
-            raise ValueError(
-                "Vector store not initialized. Call initialize_vector_store first."
-            )
+            self.initialize_vector_store()
 
-        chain = self.setup_rag_chain()
-        response = chain.invoke({"query": question})
+        self.setup_rag_chain()
+        response = self.chain.invoke({"input": question})
 
         return {
-            "answer": response["result"],
-            "source_documents": [
-                doc.page_content for doc in response["source_documents"]
-            ],
+            "answer": response["answer"],
+            "source_documents": [doc.page_content for doc in response["context"]],
         }
