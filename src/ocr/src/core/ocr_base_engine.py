@@ -24,7 +24,7 @@ class OCRResult:
     language: Optional[str] = None
 
 
-class OCREngine:
+class BaseEngine:
     def __init__(self, config: OCRConfig):
         self.config = config
         self.image_handler = ImageHandler()
@@ -42,7 +42,7 @@ class OCREngine:
         except ImportError:
             return False
 
-    def _process_image(self, image_path: Path) -> List[OCRResult]:
+    def _process_image(self, image_path: Path, image_page: int) -> List[OCRResult]:
         image = self.image_handler.load_image(image_path)
         processed = self.image_handler.preprocess_image(
             image, self.config.preprocessing
@@ -50,11 +50,15 @@ class OCREngine:
 
         raw_results = self.reader.readtext(processed.image)
         return [
-            OCRResult(text=text, confidence=conf, bounding_box=bbox)
+            OCRResult(
+                text=text, confidence=conf, bounding_box=bbox, page_number=image_page
+            )
             for bbox, text, conf in raw_results
         ]
 
-    def _process_images(self, image_paths: list[Path]) -> List[OCRResult]:
+    def _process_images(
+        self, image_paths: list[Path], image_pages: list[int]
+    ) -> List[OCRResult]:
         images = [
             self.image_handler.load_image(image_path) for image_path in image_paths
         ]
@@ -68,14 +72,19 @@ class OCREngine:
         )
         return [
             [
-                OCRResult(text=text, confidence=conf, bounding_box=bbox)
+                OCRResult(
+                    text=text,
+                    confidence=conf,
+                    bounding_box=bbox,
+                    page_number=image_page,
+                )
                 for bbox, text, conf in raw_results
             ]
-            for raw_results in raw_results_batch
+            for raw_results, image_page in zip(raw_results_batch, image_pages)
         ]
 
 
-class OCRFormat(OCREngine):
+class OCREngine(BaseEngine):
     def __init__(self, config):
         super().__init__(config)
 
@@ -88,7 +97,7 @@ class OCRFormat(OCREngine):
                         {
                             "text": result.text,
                             "confidence": result.confidence,
-                            # "bounding_box": result.bounding_box
+                            "bounding_box": result.bounding_box,
                         }
                         # Directly iterate through flat list
                         for result in results
@@ -113,7 +122,7 @@ class OCRFormat(OCREngine):
     def _to_text(self, results: List[OCRResult]) -> str:
         # Handle empty input
         if not results:
-            return "No OCR results available."
+            return ""
 
         # Group results by page
         pages = self._group_by_page(results)
@@ -121,7 +130,6 @@ class OCRFormat(OCREngine):
         # Generate text output
         output = []
         for page_num in sorted(pages):  # Iterate over pages in ascending order
-            # output.append(self._format_page_header(page_num))
             output.append(self._format_page_content(pages[page_num]))
 
         return "".join(output)
@@ -133,11 +141,6 @@ class OCRFormat(OCREngine):
             page_num = result.page_number
             pages.setdefault(page_num, []).append(result)
         return pages
-
-    def _format_page_header(self, page_num: int) -> str:
-        """Format header for each page."""
-        header = f"\n{'=' * 40}\nPage {page_num}\n{'=' * 40}\n"
-        return header
 
     def _format_page_content(self, results: List[OCRResult]) -> str:
         """Format the content of a single page, preserving layout."""
@@ -198,8 +201,9 @@ class OCRFormat(OCREngine):
         for batch_images in self.pdf_handler.pdf_to_images_batch(
             pdf_path, self.config.dpi, pages, self.config.batch_size
         ):
+            img_pages = [batch.page_number for batch in batch_images]
             batch_processed = self._process_images(
-                [batch.image for batch in batch_images]
+                [batch.image for batch in batch_images], img_pages
             )
             yield [bs.page_number for bs in batch_images], [
                 self._format_output(page, self.config.output_format)
