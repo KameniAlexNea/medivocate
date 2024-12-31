@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from ..enums.ocr_enum import OutputFormat
 
@@ -14,7 +14,6 @@ class PreprocessingConfig:
     contrast_enhancement: bool = True
     threshold: Optional[float] = None
     resize_factor: Optional[float] = None
-
 
 
 @dataclass
@@ -37,7 +36,7 @@ class OCRConfig:
     languages: list[str] = None
     batch_size: int = 10
     preprocessing: PreprocessingConfig = PreprocessingConfig()
-    output_format: OutputFormat = OutputFormat.JSON
+    output_format: OutputFormat = OutputFormat.TEXT
 
     def __post_init__(self):
         """Ensure directories exist and languages are set."""

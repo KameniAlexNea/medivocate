@@ -10,24 +10,19 @@ from tqdm import tqdm
 
 from ..config.ocr_config import OCRConfig
 from ..core.image_handler import ImageHandler
-from ..core.pdf_handler import PDFHandler, PDFPage
 from ..enums.ocr_enum import OutputFormat
+
+from ..config.ocr_config import OCRConfig
+from ..core.image_handler import ImageHandler
+from .pdf_base_handler import PDFHandler
+import numpy as np
+import json
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class OCRResult:
-    """Container for OCR results and metadata.
-
-    Attributes:
-        text: Extracted text
-        confidence: Confidence score
-        bounding_box: Coordinates of text location
-        page_number: Page number (for PDF)
-        language: Detected language
-    """
-
     text: str
     confidence: float
     bounding_box: tuple[float, float, float, float]
@@ -36,120 +31,24 @@ class OCRResult:
 
 
 class OCREngine:
-    """Main OCR processing engine.
-
-    Coordinates between PDF/Image handlers and EasyOCR to perform text extraction
-    with support for multiple languages, batch processing, and various output formats.
-
-    Attributes:
-        pdf_handler: PDFHandler instance
-        image_handler: ImageHandler instance
-        config: OCR configuration
-        reader: EasyOCR reader instance
-    """
-
-    def __init__(
-        self, pdf_handler: PDFHandler, image_handler: ImageHandler, config: OCRConfig
-    ):
-        """Initialize OCR engine with handlers and configuration.
-
-        Args:
-            pdf_handler: Instance of PDFHandler
-            image_handler: Instance of ImageHandler
-            config: OCR configuration
-        """
-        self.pdf_handler = pdf_handler
-        self.image_handler = image_handler
+    def __init__(self, config: OCRConfig):
         self.config = config
+        self.image_handler = ImageHandler()
+        self.pdf_handler = PDFHandler()
         self.reader = easyocr.Reader(
             config.languages, gpu=True if self._check_gpu() else False
         )
 
-    def process_file(
-        self, file_path: Union[str, Path], output_format: Optional[OutputFormat] = None
-    ) -> Union[Dict, str]:
-        """Process a file (PDF or image) and extract text.
-
-        Args:
-            file_path: Path to file
-            output_format: Desired output format (defaults to config setting)
-
-        Returns:
-            Extracted text in specified format
-
-        Raises:
-            FileNotFoundError: If file doesn't exist
-            ValueError: If file format is unsupported
-        """
-        file_path = Path(file_path)
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
-
+    @staticmethod
+    def _check_gpu() -> bool:
         try:
-            if file_path.suffix.lower() == ".pdf":
-                results = self._process_pdf(file_path)
-            else:
-                results = self._process_image(file_path)
+            import torch
 
-            return self._format_output(
-                results, output_format or self.config.output_format
-            )
-
-        except Exception as e:
-            logger.error(f"Error processing file {file_path}: {str(e)}")
-            raise
-
-    def _process_pdf(self, pdf_path: Path) -> List[List[OCRResult]]:
-        """Process PDF document and extract text from all pages.
-
-        Args:
-            pdf_path: Path to PDF file
-
-        Returns:
-            List of OCR results per page
-        """
-        pages = self.pdf_handler.pdf_to_images(
-            pdf_path, self.config.dpi, batch_size=self.config.batch_size
-        )
-
-        with ThreadPoolExecutor(max_workers=self.config.batch_size) as executor:
-            results = list(tqdm(executor.map(self._process_single_page, pages), total=len(pages)))
-
-        return results
-
-    def _process_single_page(self, page: PDFPage) -> List[OCRResult]:
-        """Process a single page and extract text.
-
-        Args:
-            page: PDFPage instance
-
-        Returns:
-            List of OCR results for the page
-        """
-        processed = self.image_handler.preprocess_image(
-            page.image, self.config.preprocessing
-        )
-
-        raw_results = self.reader.readtext(processed.image)
-        return [
-            OCRResult(
-                text=text,
-                confidence=conf,
-                bounding_box=bbox,
-                page_number=page.page_number,
-            )
-            for bbox, text, conf in raw_results
-        ]
+            return torch.cuda.is_available()
+        except ImportError:
+            return False
 
     def _process_image(self, image_path: Path) -> List[OCRResult]:
-        """Process single image file.
-
-        Args:
-            image_path: Path to image file
-
-        Returns:
-            List of OCR results
-        """
         image = self.image_handler.load_image(image_path)
         processed = self.image_handler.preprocess_image(
             image, self.config.preprocessing
@@ -161,19 +60,32 @@ class OCREngine:
             for bbox, text, conf in raw_results
         ]
 
-    @staticmethod
-    def _check_gpu() -> bool:
-        """Check if GPU is available for processing."""
-        try:
-            import torch
+    def _process_images(self, image_paths: list[Path]) -> List[OCRResult]:
+        images = [
+            self.image_handler.load_image(image_path) for image_path in image_paths
+        ]
+        processed_images = [
+            self.image_handler.preprocess_image(image, self.config.preprocessing)
+            for image in images
+        ]
 
-            return torch.cuda.is_available()
-        except ImportError:
-            return False
+        raw_results_batch = self.reader.readtext_batched(
+            [processed.image for processed in processed_images]
+        )
+        return [
+            [
+                OCRResult(text=text, confidence=conf, bounding_box=bbox)
+                for bbox, text, conf in raw_results
+            ]
+            for raw_results in raw_results_batch
+        ]
+
+
+class OCRFormat(OCREngine):
+    def __init__(self, config):
+        super().__init__(config)
 
     def _to_json(self, results: List[OCRResult]) -> str:
-        import json
-
         output = {
             "pages": [
                 {
@@ -205,16 +117,6 @@ class OCREngine:
         return ET.tostring(root, encoding="unicode", method="xml")
 
     def _to_text(self, results: List[OCRResult]) -> str:
-        """Convert OCR results to plain text format.
-
-        Organizes text by page and preserves layout using relative positioning.
-
-        Args:
-            results: List of OCR results
-
-        Returns:
-            Formatted text string with page separators
-        """
         # Handle empty input
         if not results:
             return "No OCR results available."
@@ -225,7 +127,7 @@ class OCREngine:
         # Generate text output
         output = []
         for page_num in sorted(pages):  # Iterate over pages in ascending order
-            output.append(self._format_page_header(page_num))
+            # output.append(self._format_page_header(page_num))
             output.append(self._format_page_content(pages[page_num]))
 
         return "".join(output)
@@ -287,18 +189,25 @@ class OCREngine:
     def _format_output(
         self, results: List[OCRResult], format_type: OutputFormat
     ) -> Union[Dict, str]:
-        """Format OCR results according to specified output format.
-
-        Args:
-            results: List of OCR results
-            format_type: Desired output format
-
-        Returns:
-            Formatted results in specified format
-        """
         if format_type == OutputFormat.JSON:
             return self._to_json(results)
         elif format_type == OutputFormat.XML:
             return self._to_xml(results)
         else:
             return self._to_text(results)
+
+    def convert_pdf_to_data(
+        self,
+        pdf_path: Union[str, Path],
+        pages: Optional[List[int]] = None,
+    ):
+        for batch_images in self.pdf_handler.pdf_to_images_batch(
+            pdf_path, self.config.dpi, pages, self.config.batch_size
+        ):
+            batch_processed = self._process_images(
+                [batch.image for batch in batch_images]
+            )
+            yield [bs.page_number for bs in batch_images], [
+                self._format_output(page, self.config.output_format)
+                for page in batch_processed
+            ]

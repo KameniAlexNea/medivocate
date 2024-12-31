@@ -5,13 +5,9 @@ from glob import glob
 
 from tqdm import tqdm
 
-from src.config.ocr_config import OCRConfig
-from src.config.ocr_config import PreprocessingConfig
-from src.core.image_handler import ImageHandler
-from src.core.ocr_engine import OCREngine
-from src.core.pdf_handler import PDFHandler
+from src.config.ocr_config import OCRConfig, PreprocessingConfig
+from src.core.ocr_base_engine import OCRFormat
 from src.enums.ocr_enum import OutputFormat
-from src.utils.preprocessing import ImagePreprocessor
 
 
 def setup_logging():
@@ -46,34 +42,24 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
     )
 
     # Initialize components
-    preprocessor = ImagePreprocessor()
-    image_handler = ImageHandler(preprocessor)
-    pdf_handler = PDFHandler(
-        image_handler=image_handler, max_workers=4, memory_limit=1024
-    )
-
-    # Initialize OCR engine
-    ocr_engine = OCREngine(
-        pdf_handler=pdf_handler, image_handler=image_handler, config=config
-    )
+    ocr_engine = OCRFormat(config)
 
     try:
-        # Process file
-        result = ocr_engine.process_file(file_path, output_format)
-
         # Create output folder if it doesn't exist
         os.makedirs(output_folder, exist_ok=True)
+        # Process file
+        for pages, contents in ocr_engine.convert_pdf_to_data(file_path, list(range(16))):
+            for page_num, result in zip(pages, contents):
+                # Prepare output file name and path
+                base_name = os.path.splitext(os.path.basename(file_path))[0]
+                extension = output_format.value.lower()
+                output_file_path = os.path.join(output_folder, f"{base_name}-page_{page_num:04d}.{extension}")
 
-        # Prepare output file name and path
-        base_name = os.path.splitext(os.path.basename(file_path))[0]
-        extension = output_format.value.lower()
-        output_file_path = os.path.join(output_folder, f"{base_name}.{extension}")
+                # Write results to file
+                with open(output_file_path, "w", encoding="utf-8") as output_file:
+                    output_file.write(result)
 
-        # Write results to file
-        with open(output_file_path, "w", encoding="utf-8") as output_file:
-            output_file.write(result)
-
-        logging.info(f"Output saved to: {output_file_path}")
+                logging.info(f"Output saved to: {output_file_path}")
 
     except Exception as e:
         logging.error(f"Error processing file '{file_path}': {str(e)}")
@@ -90,7 +76,11 @@ if __name__ == "__main__":
         help="Path to the file or folder containing list of files",
     )
     parser.add_argument(
-        "--output_format", default="text", required=False, type=str, help="output format of OCR Document."
+        "--output_format",
+        default="text",
+        required=False,
+        type=str,
+        help="output format of OCR Document.",
     )
 
     args = parser.parse_args()

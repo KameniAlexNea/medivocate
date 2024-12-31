@@ -7,33 +7,18 @@ import numpy.typing as npt
 from PIL import Image
 
 from ..config.ocr_config import PreprocessingConfig
-from ..utils.preprocessing import ImagePreprocessor, ProcessedImage
+from .preprocessing import ImagePreprocessor, ProcessedImage
 
 logger = logging.getLogger(__name__)
 
 
 class ImageHandler:
-    """Handles all image-related operations including loading and preprocessing.
-
-    This class serves as a facade for image processing operations, coordinating
-    between different preprocessing steps and ensuring proper image handling.
-
-    Attributes:
-        preprocessor: Instance of ImagePreprocessor
-        _supported_formats: Set of supported image formats
-    """
-
     _supported_formats = {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
 
-    def __init__(self, preprocessor: ImagePreprocessor):
-        """Initialize ImageHandler with preprocessor.
+    def __init__(self):
+        self.preprocessor = ImagePreprocessor()
 
-        Args:
-            preprocessor: Instance of ImagePreprocessor for image enhancement
-        """
-        self.preprocessor = preprocessor
-
-    def load_image(self, path: Union[str, Path]) -> npt.NDArray:
+    def load_image(self, path: Union[str, Path, Image.Image]) -> npt.NDArray:
         """Load image from file path with validation.
 
         Args:
@@ -46,6 +31,8 @@ class ImageHandler:
             ValueError: If file format is unsupported
             FileNotFoundError: If file doesn't exist
         """
+        if not isinstance(path, str) and not isinstance(path, Path):
+            return np.array(path)
         path = Path(path)
         if not path.exists():
             raise FileNotFoundError(f"Image file not found: {path}")
