@@ -1,3 +1,4 @@
+import io
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -7,8 +8,6 @@ import numpy as np
 import numpy.typing as npt
 import pymupdf
 from PIL import Image
-import io
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +20,11 @@ class PDFPage:
     size: tuple[int, int]
 
 
-def get_page_data(page: pymupdf.Document, page_id, dpi, resize = False):
+def get_page_data(page: pymupdf.Document, page_id, dpi, resize=False):
     img = Image.open(io.BytesIO(pymupdf.utils.get_pixmap(page, dpi=dpi).tobytes()))
     if resize:
-        img = img.resize(size=(800, 1333)) # fixed shape for batch ocr engine ?
-    return PDFPage(
-        np.array(img), page_id, dpi, img.size
-    )
+        img = img.resize(size=(800, 1333))  # fixed shape for batch ocr engine ?
+    return PDFPage(np.array(img), page_id, dpi, img.size)
 
 
 class PDFHandler:
@@ -48,12 +45,4 @@ class PDFHandler:
             pages[i : i + batch_size] for i in range(0, len(pages), batch_size)
         ]
         for batch in page_batched:
-            yield [
-                get_page_data(
-                    doc[i],
-                    i,
-                    dpi,
-                    not (batch_size==1)
-                )
-                for i in batch
-            ]
+            yield [get_page_data(doc[i], i, dpi, not (batch_size == 1)) for i in batch]

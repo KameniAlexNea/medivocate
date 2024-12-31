@@ -48,12 +48,16 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
         # Create output folder if it doesn't exist
         os.makedirs(output_folder, exist_ok=True)
         # Process file
-        for pages, contents in ocr_engine.convert_pdf_to_data(file_path, list(range(16))):
+        for pages, contents in ocr_engine.convert_pdf_to_data(
+            file_path, list(range(16))
+        ):
             for page_num, result in zip(pages, contents):
                 # Prepare output file name and path
                 base_name = os.path.splitext(os.path.basename(file_path))[0]
                 extension = output_format.value.lower()
-                output_file_path = os.path.join(output_folder, f"{base_name}-page_{page_num:04d}.{extension}")
+                output_file_path = os.path.join(
+                    output_folder, f"{base_name}-page_{page_num:04d}.{extension}"
+                )
 
                 # Write results to file
                 with open(output_file_path, "w", encoding="utf-8") as output_file:

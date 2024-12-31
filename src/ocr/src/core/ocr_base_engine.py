@@ -1,22 +1,16 @@
+import json
 import logging
 import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import easyocr
-from tqdm import tqdm
 
 from ..config.ocr_config import OCRConfig
 from ..core.image_handler import ImageHandler
 from ..enums.ocr_enum import OutputFormat
-
-from ..config.ocr_config import OCRConfig
-from ..core.image_handler import ImageHandler
 from .pdf_base_handler import PDFHandler
-import numpy as np
-import json
 
 logger = logging.getLogger(__name__)
 
