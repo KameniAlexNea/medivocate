@@ -1,4 +1,13 @@
+langchain-ollama
+langchain-groq
+langchain-community
+langchain-chroma
 langchain
-sentence-transformers
-pinecone
-keybert
+ollama
+chromadb
+# OCR
+pdf2image
+Pillow
+easyocr
+PyMuPDF
+tqdm
