@@ -78,18 +78,21 @@ class RAGSystem:
         if self.chain is not None:
             return
         """Set up the RAG chain with custom prompt"""
-        prompt_template = """Use the following pieces of context to answer the question at the end.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
+        prompt_template = """Using the context provided below, answer the question that follows as accurately as possible.
+If the answer cannot be determined from the context, respond with "I don't know." Avoid making up information.
 
-        Context: {context}
+**Context**: 
+{context}
 
-        Question: {input}
-        Answer:"""
+**Question**: 
+{input}
+
+Answer (You should answer in the same language as the given question):"""
 
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["context", "input"]
         )
-        retriever = self.vector_store.as_retriever(search_kwargs={"k": 7})
+        retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
         question_answer_chain = create_stuff_documents_chain(self.llm, prompt)
 
         self.chain = create_retrieval_chain(retriever, question_answer_chain)
