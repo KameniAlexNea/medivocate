@@ -76,7 +76,7 @@ class ChunkingManager:
 
     def clean_text(self, text):
         prompt = self.cleaner_prompt.format(text=text)
-        cleaned = self.llm(prompt)
+        cleaned = self.llm.invoke([("system", prompt)]).content
 
         return cleaned
 
@@ -84,7 +84,7 @@ class ChunkingManager:
         summaries = []
         for paragraph in paragraphs:
             input_prompt = self.summarize_prompt.format(paragraph=paragraph)
-            summary = self.llm(input_prompt)
+            summary = self.llm.invoke([("system", input_prompt)]).content
             summaries.append(summary.strip())
         return summaries
 
@@ -92,7 +92,7 @@ class ChunkingManager:
         keywords_list = []
         for paragraph in paragraphs:
             input_prompt = self.keywords_prompt.format(paragraph=paragraph)
-            keywords = self.llm(input_prompt)
+            keywords = self.llm.invoke([("system", input_prompt)]).content
             keywords_list.append(keywords.strip().split(","))
         return keywords_list
 
@@ -163,9 +163,13 @@ class ChunkingManager:
 
 
 if __name__ == "__main__":
-    from ..utilities.llm_models import get_llm_model_chat
-    llm = get_llm_model_chat()
+    from utilities.llm_models import get_llm_model_chat
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    
+    llm = get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
     chunkingManager = ChunkingManager(chunk_size=300, chunk_overlap=50, llm=llm)
 
-    file_path = "../../data/chunking_data_sample/Le Livre Des Morts Des Anciens egyptiens-page_0009.text"
+    file_path = "../data/chunking_data_sample/Le Livre Des Morts Des Anciens egyptiens-page_0009.text"
     documents = chunkingManager.retrieve_documents_from_file(file_path=file_path, verbose=True)
