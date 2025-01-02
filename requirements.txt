@@ -11,5 +11,5 @@ Pillow
 easyocr
 PyMuPDF
 tqdm
-gradio
 keybert
+gradio
