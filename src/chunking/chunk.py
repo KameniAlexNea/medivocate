@@ -14,41 +14,73 @@ class ChunkingManager:
         self.chunk_overlap = chunk_overlap
         self.nb_keywords = nb_keywords
         self.llm = llm
+        
+        self.init_summarize_prompt()
+        self.init_keywords_prompt()
+        self.init_cleaner_prompt()
+        
+        self.define_text_splitter()
+
+    def init_keywords_prompt(self):
+        keywords_prompt_template = """Here is a text extracted from a book:
+        {paragraph}
+
+        Extract the 3 most important keywords from this text, separated by commas.
+        """
+        self.keywords_prompt = PromptTemplate(
+            input_variables=["paragraph"], template=keywords_prompt_template
+        )
+
+    def init_summarize_prompt(self):
         summarize_prompt_template = """
-        This is a text :
+        You are a summarization assistant. Your task is to summarize the following excerpt from a book while preserving the logical flow of ideas and the paragraph structure. 
 
-{paragraph}
+        For each paragraph in the excerpt:
+        1. Identify the main idea or theme discussed.
+        2. Rewrite the paragraph in a concise manner while retaining the key points and relationships between concepts.
+        3. Ensure the summarized text maintains the logical order and coherence of the original text.
 
-Summarize it in less than 50 words and more than 10 words.
+        Here is the excerpt:
+
+        {paragraph}
+
+        Summarize the excerpt following the above instructions.
+
         """
         self.summarize_prompt = PromptTemplate(
             input_variables=["paragraph"], template=summarize_prompt_template
         )
 
-        keywords_prompt_template = """Here is a paragraph:
-{paragraph}
-
-Extract the 3 most important keywords from this paragraph, separated by commas.
-       """
-        self.keywords_prompt = PromptTemplate(
-            input_variables=["paragraph"], template=keywords_prompt_template
-        )
-        self.define_text_splitter()
 
     def define_text_splitter(self):
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
         )
 
-    def clean_text(self, text: str):
-        text = re.sub(r"\s+", " ", text)  # Remplace les espaces multiples par un seul
-        text = re.sub(
-            r"\n\s*\n+", "\n", text
-        )  # Supprime les retours multiples à la ligne
-        text = re.sub(r"[^\w\s\n.,;!?-]", "", text)
-        return text.strip()
+    def init_cleaner_prompt(self):
+        template="""
+        You are a text cleaning assistant. Your task is to:
+        1. Correct spelling mistakes.
+        2. Split concatenated words while keeping the proper context.
+        3. Remove any unnecessary characters or symbols that may degrade the performance of a retrieval-augmented generation (RAG) model.
 
-    def generate_summaries(self, paragraphs: str):
+        Input text:
+        {text}
+
+        Clean and corrected text:
+        """
+
+        self.cleaner_prompt = PromptTemplate(
+            input_variables=["text"], template=template
+        )
+
+    def clean_text(self, text):
+        prompt = self.cleaner_prompt.format(text=text)
+        cleaned = self.llm(prompt)
+
+        return cleaned
+
+    def init_summaries(self, paragraphs: str):
         summaries = []
         for paragraph in paragraphs:
             input_prompt = self.summarize_prompt.format(paragraph=paragraph)
@@ -56,7 +88,7 @@ Extract the 3 most important keywords from this paragraph, separated by commas.
             summaries.append(summary.strip())
         return summaries
 
-    def generate_keywords(self, paragraphs: str):
+    def init_keywords(self, paragraphs: str):
         keywords_list = []
         for paragraph in paragraphs:
             input_prompt = self.keywords_prompt.format(paragraph=paragraph)
@@ -87,15 +119,36 @@ Extract the 3 most important keywords from this paragraph, separated by commas.
             chunks.append("\n".join(current_chunk))
         return chunks
 
-    def retrieve_documents_from_file(self, file_path: str):
+    def retrieve_documents_from_file(self, file_path: str, verbose=False):
         with open(file_path, mode="r") as f:
             text = f.read()
         text = self.clean_text(text)
+        if verbose:
+            print("Cleaned text:")
+            print(text)
+            print("***********************************\n")
+
+        
         large_chunks = self.split_text_into_large_chunks(text)
-        summaries = self.generate_summaries(large_chunks)
+        summaries = self.init_summaries(large_chunks)
+
+        if verbose:
+            for (chunk, summary) in zip(large_chunks, summaries):
+                print('Text: ', chunk)
+                print('Summary: ', summary)
+                print("---------------------------------------")
+
         new_text = "\n".join(summaries)
         chunks = self.text_splitter.split_text(new_text)
-        keywords_list = self.generate_keywords(chunks)
+        keywords_list = self.init_keywords(chunks)
+
+        if verbose:
+            print("Final chunks and their keywords: ")
+            for (chunk, keywords) in zip(chunks, keywords_list):
+                print("Chunk: ", chunk)
+                print("Keywords: ", keywords)
+                print("----------------------------------------")
+
         documents = []
         uuids = [str(uuid4()) for _ in range(len(chunks))]
         for id, chunk, keywords in zip(uuids, chunks, keywords_list):
@@ -110,5 +163,9 @@ Extract the 3 most important keywords from this paragraph, separated by commas.
 
 
 if __name__ == "__main__":
+    from ..utilities.llm_models import get_llm_model_chat
+    llm = get_llm_model_chat()
+    chunkingManager = ChunkingManager(chunk_size=300, chunk_overlap=50, llm=llm)
 
-    chunkingManager = ChunkingManager()
+    file_path = "../../data/chunking_data_sample/Le Livre Des Morts Des Anciens egyptiens-page_0009.text"
+    documents = chunkingManager.retrieve_documents_from_file(file_path=file_path, verbose=True)
