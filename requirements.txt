@@ -12,3 +12,4 @@ easyocr
 PyMuPDF
 tqdm
 gradio
+keybert
