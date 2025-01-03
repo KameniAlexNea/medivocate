@@ -5,9 +5,9 @@ from glob import glob
 
 from tqdm import tqdm
 
-from src.config.ocr_config import OCRConfig, PreprocessingConfig
-from src.core.ocr_base_engine import OCREngine
-from src.enums.ocr_enum import OutputFormat
+from .config.ocr_config import OCRConfig, PreprocessingConfig
+from .core.ocr_base_engine import OCREngine
+from .enums.ocr_enum import OutputFormat
 
 
 def setup_logging():
@@ -73,32 +73,31 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
 if __name__ == "__main__":
     parser = ArgumentParser(description="OCRize PDF Document")
     parser.add_argument(
-        "--file_path",
-        default="/home/eak/Documents/AI/LLMChat/medivocate/data/documents/Books-20241230T221508Z-001/Books/Le Livre Des Morts Des Anciens egyptiens.pdf",
+        "--inputs",
         required=False,
         type=str,
         help="Path to the file or folder containing list of files",
     )
     parser.add_argument(
-        "--output_format",
+        "--outputs",
         default="text",
-        required=False,
+        required=False, # output format is computed
         type=str,
         help="output format of OCR Document.",
     )
 
     args = parser.parse_args()
 
-    if os.path.isfile(args.file_path):
-        output_folder = args.file_path.replace(".pdf", "")
+    if os.path.isfile(args.inputs):
+        output_folder = args.inputs.replace(".pdf", "")
         process_document(
-            args.file_path, OutputFormat[args.output_format.upper()], output_folder
+            args.inputs, OutputFormat[args.outputs.upper()], output_folder
         )
     else:
-        files = glob(os.path.join(args.file_path, "*.pdf"))
+        files = glob(os.path.join(args.inputs, "*.pdf"))
         assert len(files), "At least one file in the folder passed"
         for file in tqdm(files):
             os.makedirs(file.replace(".pdf", ""), exist_ok=True)
             process_document(
-                file, OutputFormat[args.output_format.upper()], file.replace(".pdf", "")
+                file, OutputFormat[args.outputs.upper()], file.replace(".pdf", "")
             )
