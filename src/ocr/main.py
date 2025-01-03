@@ -6,7 +6,7 @@ from glob import glob
 from tqdm import tqdm
 
 from src.config.ocr_config import OCRConfig, PreprocessingConfig
-from src.core.ocr_base_engine import OCRFormat
+from src.core.ocr_base_engine import OCREngine
 from src.enums.ocr_enum import OutputFormat
 
 
@@ -42,7 +42,7 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
     )
 
     # Initialize components
-    ocr_engine = OCRFormat(config)
+    ocr_engine = OCREngine(config)
 
     try:
         # Create output folder if it doesn't exist
