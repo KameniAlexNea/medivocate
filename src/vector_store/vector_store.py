@@ -1,8 +1,9 @@
 import os
 from typing import List
 
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
 from tqdm import tqdm
-from langchain_ollama import OllamaEmbeddings, Chroma
 
 
 class VectorStoreManager:
@@ -21,7 +22,7 @@ class VectorStoreManager:
                 "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
             },
         )
-    
+
     def _batch_process_documents(self, documents: List):
         """Process documents in batches"""
         for i in tqdm(
