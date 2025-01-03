@@ -6,6 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import Runnable
 from tqdm import tqdm
 
@@ -79,7 +80,6 @@ class RAGSystem:
             return
         """Set up the RAG chain with custom prompt"""
         prompt_template = """Using the context provided below, answer the question that follows as accurately as possible.
-If the answer cannot be determined from the context, respond with "I don't know." Avoid making up information.
 
 **Context**: 
 {context}
@@ -87,13 +87,15 @@ If the answer cannot be determined from the context, respond with "I don't know.
 **Question**: 
 {input}
 
-Answer (You should answer in the same language as the given question):"""
+Answer (You should answer in the same language as the given question, even when you don't know):"""
 
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["context", "input"]
         )
         retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
-        question_answer_chain = create_stuff_documents_chain(self.llm, prompt)
+        question_answer_chain = create_stuff_documents_chain(
+            self.llm, prompt, output_parser=StrOutputParser()
+        )
 
         self.chain = create_retrieval_chain(retriever, question_answer_chain)
 
@@ -109,3 +111,13 @@ Answer (You should answer in the same language as the given question):"""
             "answer": response["answer"],
             "source_documents": [doc.page_content for doc in response["context"]],
         }
+
+    def query_iter(self, question: str):
+        """Query the RAG system"""
+        if not self.vector_store:
+            self.initialize_vector_store()
+
+        self.setup_rag_chain()
+        for token in self.chain.stream({"input": question}):
+            if "answer" in token:
+                yield token["answer"]
