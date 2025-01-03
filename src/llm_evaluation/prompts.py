@@ -1,4 +1,64 @@
 OPEN_QUESTION_PROMPT = """
+Vous êtes un assistant utile chargé de générer trois questions ouvertes, concises et réfléchies basées sur un contexte fourni. Les questions doivent être suffisamment claires pour évaluer la compréhension du contexte, sans nécessiter directement le contexte pour y répondre. Elles doivent encourager la pensée critique, la synthèse ou les connaissances générales sur le sujet. Fournissez des réponses précises et complètes pour chaque question.  
+
+Formatez votre sortie en XML, où :  
+- Chaque question est entourée d'une balise `<question>`.  
+- La réponse à chaque question est entourée d'une balise `<answer>`.  
+- Chaque paire question-réponse est encapsulée dans une balise `<qa>`.  
+- Le XML doit être lisible et correctement indenté pour plus de clarté.  
+
+**Directives pour les questions** :  
+1. Évitez les questions très spécifiques ou trop détaillées qui nécessitent le texte exact du contexte pour y répondre.  
+2. Concentrez-vous sur des thèmes plus larges, des implications ou des connaissances générales dérivées du contexte.  
+3. Assurez-vous que les questions sont significatives et peuvent être répondues indépendamment du libellé exact du contexte.  
+
+**Entrée :**
+Contexte :
+{context}  
+
+**Sortie attendue :**  
+Générez trois éléments `<qa>` avec des balises `<question>` et `<answer>` correspondantes. Structurez le XML comme suit :  
+```xml
+<qas>
+    <qa>
+        <question>[Première question ouverte basée sur le contexte]</question>
+        <answer>[Réponse à la première question]</answer>
+    </qa>
+    <qa>
+        <question>[Deuxième question ouverte basée sur le contexte]</question>
+        <answer>[Réponse à la deuxième question]</answer>
+    </qa>
+    <qa>
+        <question>[Troisième question ouverte basée sur le contexte]</question>
+        <answer>[Réponse à la troisième question]</answer>
+    </qa>
+</qas>
+```  
+
+**Exemple d'entrée :**  
+Contexte :  
+"Les empires du Mali et du Songhaï étaient parmi les plus puissants d'Afrique de l'Ouest au Moyen Âge. Ces empires prospéraient grâce au commerce, en particulier de l'or et du sel, et étaient des centres de culture et de savoir, comme l'illustre la ville de Tombouctou. Parmi leurs dirigeants notables figuraient Mansa Musa, dont le pèlerinage à La Mecque au XIVe siècle a démontré l'immense richesse du Mali, et Askia Muhammad du Songhaï, qui a réformé la gouvernance et renforcé l'Islam dans la région."  
+
+**Exemple de sortie :**  
+```xml
+<qas>
+    <qa>
+        <question>Quels étaient les principaux facteurs qui ont contribué au succès des empires médiévaux d'Afrique de l'Ouest comme le Mali et le Songhaï ?</question>
+        <answer>Le succès de ces empires reposait sur le contrôle des routes commerciales, en particulier pour l'or et le sel, les avancées culturelles et éducatives, et le leadership fort de dirigeants comme Mansa Musa et Askia Muhammad.</answer>
+    </qa>
+    <qa>
+        <question>Comment des dirigeants comme Mansa Musa et Askia Muhammad ont-ils influencé le paysage culturel et religieux de leurs empires ?</question>
+        <answer>Mansa Musa a promu l'Islam à travers son célèbre pèlerinage à La Mecque, montrant la richesse du Mali, tandis qu'Askia Muhammad a réformé la gouvernance et renforcé les pratiques islamiques dans le Songhaï.</answer>
+    </qa>
+    <qa>
+        <question>Quel rôle des villes comme Tombouctou ont-elles joué dans le développement des empires médiévaux d'Afrique de l'Ouest ?</question>
+        <answer>Tombouctou était un centre de commerce, d'éducation et de culture islamique, abritant des universités renommées et attirant des érudits et des marchands du monde entier.</answer>
+    </qa>
+</qas>
+``` 
+"""
+
+OPEN_QUESTION_PROMPT_EN = """
 You are a helpful assistant tasked with generating three open-ended, concise, and thoughtful questions based on a provided context. The questions should be clear enough to evaluate the understanding of the context and should not require the context to answer directly. Instead, they should encourage critical thinking, synthesis, or general knowledge about the topic. Provide accurate and complete answers for each question.  
 
 Format your output in XML, where:  
