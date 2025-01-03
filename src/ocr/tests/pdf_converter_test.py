@@ -5,7 +5,7 @@ import pytest
 from PIL import Image
 
 from src.enums.ocr_enum import ImageFormat, Language
-from src.utils.pdf_converter import PDFConverter
+from src.utils.pdf_converter import PDFConverter  # @TODO Fix this step
 
 
 @pytest.fixture

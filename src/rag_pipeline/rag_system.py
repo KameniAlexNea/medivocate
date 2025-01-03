@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -26,6 +27,7 @@ class RAGSystem:
         self.llm = self._get_llm()
         self.vector_store: Optional[Chroma] = None
         self.chain: Optional[Runnable] = None
+        self.collection_name = os.getenv("OLLAM_EMB").split(":")[0]
 
     def _get_llm(self):
         return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
@@ -59,6 +61,7 @@ class RAGSystem:
                     documents=batch,
                     embedding=self.embeddings,
                     persist_directory=self.persist_directory_dir,
+                    collection_name=self.collection_name,
                 )
             else:
                 # Add subsequent batches
@@ -70,6 +73,7 @@ class RAGSystem:
             self._batch_process_documents(documents)
         else:
             self.vector_store = Chroma(
+                collection_name=self.collection_name,
                 persist_directory=self.persist_directory_dir,
                 embedding_function=self.embeddings,
             )
@@ -78,18 +82,21 @@ class RAGSystem:
         if self.chain is not None:
             return
         """Set up the RAG chain with custom prompt"""
-        prompt_template = """Use the following pieces of context to answer the question at the end.
-        If you don't know the answer, just say that you don't know, don't try to make up an answer.
+        prompt_template = """Using the context provided below, answer the question that follows as accurately as possible.
+If the answer cannot be determined from the context, respond with "I don't know." Avoid making up information.
 
-        Context: {context}
+**Context**: 
+{context}
 
-        Question: {input}
-        Answer:"""
+**Question**: 
+{input}
+
+Answer (You should answer in the same language as the given question):"""
 
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["context", "input"]
         )
-        retriever = self.vector_store.as_retriever(search_kwargs={"k": 7})
+        retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
         question_answer_chain = create_stuff_documents_chain(self.llm, prompt)
 
         self.chain = create_retrieval_chain(retriever, question_answer_chain)
@@ -106,3 +113,33 @@ class RAGSystem:
             "answer": response["answer"],
             "source_documents": [doc.page_content for doc in response["context"]],
         }
+
+    def query_iter(self, question: str):
+        """Query the RAG system"""
+        if not self.vector_store:
+            self.initialize_vector_store()
+
+        self.setup_rag_chain()
+        for token in self.chain.stream({"input": question}):
+            if "answer" in token:
+                yield token["answer"]
+
+
+if __name__ == "__main__":
+    from glob import glob
+
+    docs_dir = "data/docs"
+    persist_directory_dir = "data/chroma_db"
+    batch_size = 64
+
+    # Initialize RAG system
+    rag = RAGSystem(docs_dir, persist_directory_dir, batch_size)
+
+    if len(glob(os.path.join(persist_directory_dir, "*/*.bin"))):
+        rag.initialize_vector_store()  # vector store initialized
+    else:
+        # Load and index documents
+        documents = rag.load_documents()
+        rag.initialize_vector_store(documents)  # documents
+
+    print(rag.query("Quand a eu lieu la traite négrière ?"))

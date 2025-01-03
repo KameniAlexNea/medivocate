@@ -55,11 +55,13 @@ def generate_questions(input_folder: str, n_files: int, output_folder: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate questions from text files.")
     parser.add_argument(
-        "input_folder", type=str, help="Path to the folder containing input text files."
+        "--input_folder",
+        type=str,
+        help="Path to the folder containing input text files.",
     )
-    parser.add_argument("n_files", type=int, help="Number of files to process.")
+    parser.add_argument("--n_files", type=int, help="Number of files to process.")
     parser.add_argument(
-        "output_folder",
+        "--output_folder",
         type=str,
         help="Path to the folder where output files will be saved.",
     )
