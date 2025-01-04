@@ -11,8 +11,8 @@ class BaseAgent:
 
     def __call__(self, text):
         input_prompt = self.prompt_template.format(inputs=text)
-        return self.llm.invoke([("system", input_prompt)])
-    
+        return self.llm.invoke([("system", input_prompt)]).content.strip()
+
     def batch_process(self, texts: list[str]):
         return [self.process(text) for text in texts]
 
@@ -21,7 +21,7 @@ class BaseAgent:
 
 
 class SummaryAgent(BaseAgent):
-    def __init__(self, llm):
+    def __init__(self, llm: ChatOllama):
         summarize_prompt_template = """
 **Tâche :** Résumer l'extrait suivant d'un livre tout en préservant son flux logique, sa cohérence et sa structure de paragraphes.
 
@@ -40,7 +40,7 @@ class SummaryAgent(BaseAgent):
 
 
 class CleanAgent(BaseAgent):
-    def __init__(self, llm):
+    def __init__(self, llm: ChatOllama):
         summarize_prompt_template = """
 **Tâche :** Nettoyer et préparer le texte d'entrée pour une utilisation optimale dans un modèle de génération augmentée par récupération (RAG).
 
@@ -52,9 +52,28 @@ class CleanAgent(BaseAgent):
 5. Dans votre sortie, la fin d'un paragraphe est définie par une nouvelle ligne.
 
 **Texte d'entrée :**  
-{text}
+{inputs}
 
 **Sortie (Texte Nettoyé) :**  
 [Fournissez uniquement le texte nettoyé et corrigé.]
 """
         super().__init__(llm, summarize_prompt_template)
+
+
+class KeyWordAgent(BaseAgent):
+    def __init__(self, llm: ChatOllama):
+        keywords_prompt_template = """
+**Tâche** : Identifier les trois mots-clés les plus importants du texte suivant extrait d'un livre.
+
+Instructions :
+1. Concentrez-vous sur les mots ou expressions qui capturent le mieux les thèmes ou idées principaux du texte.
+2. Évitez d'inclure des termes communs ou génériques, sauf s'ils sont essentiels au contexte.
+3. Fournissez les mots-clés sous forme de liste, séparés par des virgules.
+
+Texte :
+{inputs}
+
+Sortie :
+Mots-clés, séparés par des virgules
+"""
+        super().__init__(llm, keywords_prompt_template)

@@ -1,7 +1,15 @@
 import re
 import string
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+
 class Processor:
+    def __init__(self, chunk_size=1000, chunk_overlap=200):
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
+
     @staticmethod
     def merge_sentences(sentence: str):
         punctuation = "?!."
@@ -61,3 +69,27 @@ class Processor:
             and len(count2) < 5
             and len(count3) < 5
         )
+
+    @staticmethod
+    def split_text_into_large_chunks(text: str, target_word_count=300):
+        """
+        on splitte le texte en chunks qui vont être résumés par la suite
+        """
+        paragraphs = [para.strip() for para in text.split("\n\n") if para.strip()]
+        chunks = []
+        current_chunk = []
+        current_word_count = 0
+        for paragraph in paragraphs:
+            word_count = len(re.findall(r"\w+", paragraph))
+            if current_word_count + word_count >= target_word_count:
+                current_chunk.append(paragraph)
+                chunks.append("\n".join(current_chunk))
+                current_chunk = []
+                current_word_count = 0
+            current_chunk.append(paragraph)
+            current_word_count += word_count
+
+        # Ajouter le dernier chunk s'il reste des paragraphes
+        if current_chunk:
+            chunks.append("\n".join(current_chunk))
+        return chunks
