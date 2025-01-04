@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--outputs",
         default="text",
-        required=False, # output format is computed
+        required=False,  # output format is computed
         type=str,
         help="output format of OCR Document.",
     )
@@ -90,9 +90,7 @@ if __name__ == "__main__":
 
     if os.path.isfile(args.inputs):
         output_folder = args.inputs.replace(".pdf", "")
-        process_document(
-            args.inputs, OutputFormat[args.outputs.upper()], output_folder
-        )
+        process_document(args.inputs, OutputFormat[args.outputs.upper()], output_folder)
     else:
         files = glob(os.path.join(args.inputs, "*.pdf"))
         assert len(files), "At least one file in the folder passed"

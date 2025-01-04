@@ -7,6 +7,7 @@ from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
+from sentence_transformers import SentenceTransformer
 
 
 class ChunkingManager:
@@ -15,6 +16,7 @@ class ChunkingManager:
         self.chunk_overlap = chunk_overlap
         self.nb_keywords = nb_keywords
         self.llm = llm
+        self.kwb = KeyBERT(SentenceTransformer("all-mpnet-base-v2", device="cuda:0"))
 
         self.init_summarize_prompt()
         self.init_keywords_prompt()
@@ -24,19 +26,19 @@ class ChunkingManager:
 
     def init_keywords_prompt(self):
         keywords_prompt_template = """
-        Tâche : Identifier les trois mots-clés les plus importants du texte suivant extrait d'un livre.
+**Tâche** : Identifier les trois mots-clés les plus importants du texte suivant extrait d'un livre.
 
-        Instructions :
-        1. Concentrez-vous sur les mots ou expressions qui capturent le mieux les thèmes ou idées principaux du texte.
-        2. Évitez d'inclure des termes communs ou génériques, sauf s'ils sont essentiels au contexte.
-        3. Fournissez les mots-clés sous forme de liste, séparés par des virgules.
+Instructions :
+1. Concentrez-vous sur les mots ou expressions qui capturent le mieux les thèmes ou idées principaux du texte.
+2. Évitez d'inclure des termes communs ou génériques, sauf s'ils sont essentiels au contexte.
+3. Fournissez les mots-clés sous forme de liste, séparés par des virgules.
 
-        Texte :
-        {paragraph}
+Texte :
+{paragraph}
 
-        Sortie :
-        Mots-clés, séparés par des virgules
-        """
+Sortie :
+Mots-clés, séparés par des virgules
+"""
         self.keywords_prompt = PromptTemplate(
             input_variables=["paragraph"], template=keywords_prompt_template
         )
@@ -161,15 +163,13 @@ class ChunkingManager:
 
     def generate_keywords(self, paragraphs: str, use_llm=True):
         keywords_list = []
-        if not use_llm:
-            kw_model = KeyBERT()
         for paragraph in paragraphs:
             input_prompt = self.keywords_prompt.format(paragraph=paragraph)
             if use_llm:
                 keywords = self.llm.invoke([("system", input_prompt)]).content
                 keywords_list.append(keywords.strip().split(","))
             else:
-                keywords = kw_model.extract_keywords(
+                keywords = self.kwb.extract_keywords(
                     paragraph,
                     keyphrase_ngram_range=(1, 2),
                     stop_words="french",
@@ -183,7 +183,7 @@ class ChunkingManager:
         """
         on splitte le texte en chunks qui vont être résumés par la suite
         """
-        paragraphs = [para.strip() for para in text.split("\n") if para.strip()]
+        paragraphs = [para.strip() for para in text.split("\n\n") if para.strip()]
         chunks = []
         current_chunk = []
         current_word_count = 0
