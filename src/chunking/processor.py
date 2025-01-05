@@ -76,7 +76,7 @@ class Processor:
         on splitte le texte en chunks qui vont être résumés par la suite
         """
         paragraphs = [para.strip() for para in text.split("\n\n") if para.strip()]
-        chunks = []
+        chunks: list[str] = []
         current_chunk = []
         current_word_count = 0
         for paragraph in paragraphs:

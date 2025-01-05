@@ -20,11 +20,12 @@ class ChatInterface:
     def create_interface(self):
         chat_interface = gr.ChatInterface(
             fn=self.respond,
-            title="RAG Chat Assistant",
-            description="Ask questions about your documents",
+            title="Medivocate",
+            description="Medivocate is an AI-driven platform leveraging Retrieval-Augmented Generation (RAG) powered by African history. It processes and classifies document pages with precision to provide trustworthy, personalized guidance, fostering accurate knowledge and equitable access to historical insights.",
             retry_btn=None,
             undo_btn=None,
             clear_btn="Clear",
+            chatbot=gr.Chatbot(show_copy_button=True)
         )
         return chat_interface
 

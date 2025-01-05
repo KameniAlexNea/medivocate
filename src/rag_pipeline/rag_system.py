@@ -11,7 +11,7 @@ from langchain_core.runnables import Runnable
 from tqdm import tqdm
 
 from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
-
+from ..vector_store.vector_store import VectorStoreManager
 
 class RAGSystem:
     def __init__(
@@ -27,6 +27,7 @@ class RAGSystem:
         self.llm = self._get_llm()
         self.vector_store: Optional[Chroma] = None
         self.chain: Optional[Runnable] = None
+        self.vector_store_management = VectorStoreManager(persist_directory_dir, batch_size)
         self.collection_name = os.getenv("OLLAM_EMB").split(":")[0]
 
     def _get_llm(self):

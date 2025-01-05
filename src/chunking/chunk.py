@@ -16,7 +16,7 @@ class ChunkingManager:
         chunk_size=1000,
         chunk_overlap=200,
         top_n=3,
-        keyphrase_ngram_range=(1, 2),
+        keyphrase_ngram_range=(1, 1),
     ):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -34,14 +34,14 @@ class ChunkingManager:
     def clean_text(self, text):
         return self.clean_agent.process(text)
 
-    def generate_summaries(self, paragraphs: str):
+    def generate_summaries(self, paragraphs: list[str]):
         summaries = self.summary_agent.batch_process(paragraphs)
         return summaries
 
-    def generate_keywords(self, paragraphs: str, use_llm=True):
-        keywords_list = []
+    def generate_keywords(self, paragraphs: list[str], use_llm=True):
         if use_llm:
             return self.keyword_agent.batch_process(paragraphs)
+        keywords_list: list[str] = []
         for paragraph in paragraphs:
             keywords = self.kwb.extract_keywords(
                 paragraph,
@@ -123,7 +123,7 @@ class ChunkingManager:
                 print("Keywords: \n", keywords)
                 print("----------------------------------------\n")
 
-        documents = []
+        documents: list[Document] = []
         uuids = [str(uuid4()) for _ in range(len(chunks))]
         for id, chunk, keywords in zip(uuids, chunks, keywords_list):
             documents.append(

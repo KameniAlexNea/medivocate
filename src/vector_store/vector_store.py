@@ -5,23 +5,14 @@ from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from tqdm import tqdm
 
+from ..utilities.llm_models import get_llm_model_embedding
 
 class VectorStoreManager:
-    def __init__(self, persist_directory_dir, batch_size=10):
-        self.embeddings = self._get_embeddings()
+    def __init__(self, persist_directory_dir, batch_size=64):
+        self.embeddings = get_llm_model_embedding()
         self.vector_store = None
         self.persist_directory_dir = persist_directory_dir
         self.batch_size = batch_size
-
-    def _get_embeddings(self):
-        """Initialize embeddings based on environment configuration"""
-        return OllamaEmbeddings(
-            model=os.getenv("OLLAM_EMB"),
-            base_url=os.getenv("OLLAMA_HOST"),
-            client_kwargs={
-                "headers": {"Authorization": "Bearer " + os.getenv("OLLAMA_TOKEN")}
-            },
-        )
 
     def _batch_process_documents(self, documents: List):
         """Process documents in batches"""
