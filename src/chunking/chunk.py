@@ -5,13 +5,18 @@ from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 
-from .agents import CleanAgent, KeyWordAgent, SummaryAgent, CategoryAgent
+from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
 from .processor import Processor
 
 
 class ChunkingManager:
     def __init__(
-        self, llm: ChatOllama, chunk_size=1000, chunk_overlap=200, top_n=3, keyphrase_ngram_range=(1, 2)
+        self,
+        llm: ChatOllama,
+        chunk_size=1000,
+        chunk_overlap=200,
+        top_n=3,
+        keyphrase_ngram_range=(1, 2),
     ):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -41,7 +46,7 @@ class ChunkingManager:
             keywords = self.kwb.extract_keywords(
                 paragraph,
                 top_n=self.top_n,
-                keyphrase_ngram_range=self.keyphrase_ngram_range
+                keyphrase_ngram_range=self.keyphrase_ngram_range,
             )
             keywords = [kw[0] for kw in keywords]
             keywords_list.append(keywords)
@@ -60,16 +65,16 @@ class ChunkingManager:
         summarize_before_chunk=True,
         check_text_validity=True,
         verbose=False,
-        target_word_count=500
+        target_word_count=500,
     ):
         with open(file_path, mode="r") as f:
             text = f.read()
 
         if verbose:
-            print(("*"*38) + "\n")
+            print(("*" * 38) + "\n")
             print("Raw text:\n")
             print(text)
-            print(("-"*25) + "\n")
+            print(("-" * 25) + "\n")
 
         text = self.processor.merge_sentences(text)
 
@@ -89,10 +94,12 @@ class ChunkingManager:
         if verbose:
             print("Cleaned text:\n")
             print(text)
-            print(("*"*38) + "\n")
+            print(("*" * 38) + "\n")
 
         if summarize_before_chunk:
-            large_chunks = self.split_text_into_large_chunks(text, target_word_count=target_word_count)
+            large_chunks = self.split_text_into_large_chunks(
+                text, target_word_count=target_word_count
+            )
             summaries = self.generate_summaries(large_chunks)
 
             if verbose:
@@ -160,7 +167,9 @@ if __name__ == "__main__":
     load_dotenv()
 
     llm = get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
-    chunkingManager = ChunkingManager(chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, llm=llm)
+    chunkingManager = ChunkingManager(
+        chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, llm=llm
+    )
 
     file_path = args.input_file
 
@@ -176,17 +185,13 @@ if __name__ == "__main__":
 
     for use_llm in [True, False]:
         for summ_before_chunk in [True, False]:
-            print(
-                "*"*100
-            )
+            print("*" * 100)
             print(
                 "Starting experiment with config : use_llm_for_keyword: {} - summarize_before_chunk: {}".format(
                     use_llm, summ_before_chunk
                 )
             )
-            print(
-                "*"*100
-            )
+            print("*" * 100)
             start = time.time()
             documents = chunkingManager.retrieve_documents_from_file(
                 file_path=file_path,
