@@ -44,3 +44,5 @@ Contient des exemples fonctionnels démontrant l'utilisation des principaux modu
   ```
 * Read all document readable from the corresponded folder
   `python -m src.ocr.reader.reader_engine --pdf_path data/Books`
+* Add non readable documents with our OCR engine
+  `python -m src.ocr.main --pdf_path data/Books`
