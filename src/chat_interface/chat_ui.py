@@ -25,7 +25,7 @@ class ChatInterface:
             retry_btn=None,
             undo_btn=None,
             clear_btn="Clear",
-            chatbot=gr.Chatbot(show_copy_button=True)
+            chatbot=gr.Chatbot(show_copy_button=True),
         )
         return chat_interface
 

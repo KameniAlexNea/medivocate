@@ -4,14 +4,11 @@ from typing import List, Optional
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.prompts import PromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_core.runnables import Runnable
-from tqdm import tqdm
 
 from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
 from ..vector_store.vector_store import VectorStoreManager
+
 
 class RAGSystem:
     def __init__(
@@ -19,19 +16,18 @@ class RAGSystem:
         docs_dir: str = "data/docs",
         persist_directory_dir="data/chroma_db",
         batch_size: int = 64,
+        top_k_documents=5,
     ):
-        self.docs_dir = docs_dir
-        self.persist_directory_dir = persist_directory_dir
-        self.batch_size = batch_size
+        self.top_k_documents = top_k_documents
         self.embeddings = self._get_embeddings()
         self.llm = self._get_llm()
-        self.vector_store: Optional[Chroma] = None
         self.chain: Optional[Runnable] = None
-        self.vector_store_management = VectorStoreManager(persist_directory_dir, batch_size)
-        self.collection_name = os.getenv("OLLAM_EMB").split(":")[0]
+        self.vector_store_management = VectorStoreManager(
+            docs_dir, persist_directory_dir, batch_size
+        )
 
     def _get_llm(self):
-        return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
+        return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=150)
 
     def _get_embeddings(self):
         """Initialize embeddings based on environment configuration"""
@@ -39,45 +35,11 @@ class RAGSystem:
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
-        loader = DirectoryLoader(self.docs_dir, glob="**/*.txt", loader_cls=TextLoader)
-        documents = loader.load()
-
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
-        )
-        return splitter.split_documents(documents)
-
-    def _batch_process_documents(self, documents: List):
-        """Process documents in batches"""
-        for i in tqdm(
-            range(0, len(documents), self.batch_size), desc="Processing documents"
-        ):
-            batch = documents[i : i + self.batch_size]
-
-            if not self.vector_store:
-                # Initialize vector store with first batch
-                self.vector_store = Chroma.from_documents(
-                    documents=batch,
-                    embedding=self.embeddings,
-                    persist_directory=self.persist_directory_dir,
-                    collection_name=self.collection_name,
-                )
-            else:
-                # Add subsequent batches
-                self.vector_store.add_documents(batch)
+        return self.vector_store_management.load_documents()
 
     def initialize_vector_store(self, documents: List = None):
         """Initialize or load the vector store"""
-        if documents:
-            self._batch_process_documents(documents)
-        else:
-            self.vector_store = Chroma(
-                collection_name=self.collection_name,
-                persist_directory=self.persist_directory_dir,
-                embedding_function=self.embeddings,
-            )
+        self.vector_store_management.initialize_vector_store(documents)
 
     def setup_rag_chain(self):
         if self.chain is not None:
@@ -97,14 +59,16 @@ Answer (You should answer in the same language as the given question):"""
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["context", "input"]
         )
-        retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
+        retriever = self.vector_store_management.vector_store.as_retriever(
+            search_kwargs={"k": self.top_k_documents}
+        )
         question_answer_chain = create_stuff_documents_chain(self.llm, prompt)
 
         self.chain = create_retrieval_chain(retriever, question_answer_chain)
 
     def query(self, question: str):
         """Query the RAG system"""
-        if not self.vector_store:
+        if not self.vector_store_management.vector_store:
             self.initialize_vector_store()
 
         self.setup_rag_chain()
@@ -117,7 +81,7 @@ Answer (You should answer in the same language as the given question):"""
 
     def query_iter(self, question: str):
         """Query the RAG system"""
-        if not self.vector_store:
+        if not self.vector_store_management.vector_store:
             self.initialize_vector_store()
 
         self.setup_rag_chain()
