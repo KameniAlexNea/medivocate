@@ -26,12 +26,12 @@ class Prompter:
 
     def __call__(self, prompt):
         return self.llm.invoke(self.prompt.format(user_prompt=prompt))
+    
 
-
-if __name__ == "__main__":
+def main():
     from argparse import ArgumentParser
 
-    from ..utilities.llm_models import get_llm_model_chat
+    from utilities.llm_models import get_llm_model_chat
 
     args = ArgumentParser()
     args.add_argument("--prompt", type=str)
@@ -40,3 +40,7 @@ if __name__ == "__main__":
     llm = get_llm_model_chat("OLLAMA", temperature=0.7, max_tokens=256)
     prompt = Prompter(llm)
     print(prompt(parse.prompt).content)
+
+
+if __name__ == "__main__":
+    main()

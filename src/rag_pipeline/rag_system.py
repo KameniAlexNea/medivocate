@@ -6,8 +6,8 @@ from langchain.chains.retrieval import create_retrieval_chain
 from langchain.prompts import PromptTemplate
 from langchain_core.runnables import Runnable
 
-from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
-from ..vector_store.vector_store import VectorStoreManager
+from utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
+from vector_store.vector_store import VectorStoreManager
 
 
 class RAGSystem:

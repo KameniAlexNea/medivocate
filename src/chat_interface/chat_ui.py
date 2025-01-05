@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import gradio as gr
 
-from ..rag_pipeline.rag_system import RAGSystem
+from rag_pipeline.rag_system import RAGSystem
 
 
 class ChatInterface:
@@ -34,11 +34,14 @@ class ChatInterface:
         interface.launch(share=share)
 
 
-# Usage example:
-if __name__ == "__main__":
+def main():
     rag_system = RAGSystem()
     documents = None  # rag_system.load_documents()
     rag_system.initialize_vector_store(documents)
 
     chat_interface = ChatInterface(rag_system)
     chat_interface.launch()
+
+# Usage example:
+if __name__ == "__main__":
+    main()

@@ -6,8 +6,8 @@ from glob import glob
 
 from tqdm import tqdm
 
-from ..utilities.llm_models import get_llm_model_chat
-from .prompts import OPEN_QUESTION_PROMPT
+from utilities.llm_models import get_llm_model_chat
+from llm_evaluation.prompts import OPEN_QUESTION_PROMPT
 
 
 def generate_questions(input_folder: str, n_files: int, output_folder: str):

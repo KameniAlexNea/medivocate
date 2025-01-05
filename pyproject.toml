@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "medivocate"
+version = "0.1.0"
+description = "An AI-driven platform empowering patients with trustworthy, personalized medical guidance to combat misinformation and promote equitable healthcare."
+authors = ["Kameni Alex Nea <todo@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "chat_interface", from = "src"},
+    { include = "chunking", from = "src" },
+    { include = "llm_evaluation", from = "src" },
+    { include = "llm_integration", from = "src" },
+    { include = "ocr", from = "src" },
+    { include = "preprocessing", from = "src"},
+    { include = "prompt_engineering", from = "src"},
+    { include = "rag_pipeline", from = "src" },
+    { include = "utilities", from = "src" },
+    { include = "vector_store", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+langchain-ollama = "*"
+langchain-groq = "*"
+langchain-community = "*"
+langchain-chroma = "*"
+langchain = "*"
+ollama = "*"
+chromadb = "*"
+pdf2image = "*"
+Pillow = "*"
+easyocr = "*"
+PyMuPDF = "*"
+tqdm = "*"
+keybert = "*"
+gradio = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^6.2"
+flake8 = "*"
+black = "^21.6"
+autopep8 = "^1.5"
+autoflake = "^1.4"
+isort = "^5.9"
+mypy = "^0.910"
+safety = "^1.10"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+launch-chat = "chat_interface.chat_ui:main"
+prompt = "prompt_engineering.prompter:main"
+ocr = "ocr.main:main"
+

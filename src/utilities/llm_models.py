@@ -1,9 +1,18 @@
-import os
+from configparser import ConfigParser
 from enum import Enum
 from typing import Union
+from pathlib import Path
 
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama, OllamaEmbeddings
+
+
+llm_config = ConfigParser()
+
+llm_config.read(Path(__file__).parent / "llm_config.ini")
+
+ollama_config = llm_config["OLLAMA"]
+groq_config = llm_config["GROQ"]
 
 
 class LLMModel(Enum):
@@ -18,19 +27,19 @@ def get_llm_model_chat(
         model_type = LLMModel[model_type.upper()]
     if model_type == LLMModel.OLLAMA:
         return model_type.value(
-            model=os.getenv("OLLAMA_MODEL"),
+            model=ollama_config["model"],
             temperature=temperature,
             max_tokens=max_tokens,
             # other params...
-            base_url=os.getenv("OLLAMA_HOST"),
+            base_url=ollama_config["host"],
             client_kwargs={
                 "headers": {
-                    "Authorization": "Bearer " + (os.getenv("OLLAMA_TOKEN") or "")
+                    "Authorization": "Bearer " + (ollama_config.get("token", ""))
                 }
             },
         )
     return model_type.value(
-        model=os.getenv("GROQ_MODEL_NAME"),
+        model=groq_config["model"],
         temperature=temperature,
         max_tokens=max_tokens,
     )
@@ -38,9 +47,9 @@ def get_llm_model_chat(
 
 def get_llm_model_embedding():
     return OllamaEmbeddings(
-        model=os.getenv("OLLAM_EMB"),
-        base_url=os.getenv("OLLAMA_HOST"),
+        model=ollama_config["embedding_model"],
+        base_url=ollama_config["host"],
         client_kwargs={
-            "headers": {"Authorization": "Bearer " + (os.getenv("OLLAMA_TOKEN") or "")}
+            "headers": {"Authorization": "Bearer " + (ollama_config.get("token", ""))}
         },
     )

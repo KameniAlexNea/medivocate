@@ -6,8 +6,8 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image
 
-from ..config.ocr_config import PreprocessingConfig
-from .preprocessing import ImagePreprocessor, ProcessedImage
+from ocr.config.ocr_config import PreprocessingConfig
+from ocr.core.preprocessing import ImagePreprocessor, ProcessedImage
 
 logger = logging.getLogger(__name__)
 

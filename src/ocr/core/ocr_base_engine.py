@@ -7,10 +7,10 @@ from typing import Dict, List, Optional, Union
 
 import easyocr
 
-from ..config.ocr_config import OCRConfig
-from ..core.image_handler import ImageHandler
-from ..enums.ocr_enum import OutputFormat
-from .pdf_base_handler import PDFHandler
+from ocr.config.ocr_config import OCRConfig
+from ocr.core.image_handler import ImageHandler
+from ocr.enums.ocr_enum import OutputFormat
+from ocr.core.pdf_base_handler import PDFHandler
 
 logger = logging.getLogger(__name__)
 

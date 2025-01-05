@@ -5,8 +5,8 @@ from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 
-from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
-from .processor import Processor
+from chunking.agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
+from chunking.processor import Processor
 
 
 class ChunkingManager:
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 
     from dotenv import load_dotenv
 
-    from ..utilities.llm_models import get_llm_model_chat
+    from utilities.llm_models import get_llm_model_chat
 
     load_dotenv()
 

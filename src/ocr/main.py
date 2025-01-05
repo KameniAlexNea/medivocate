@@ -5,9 +5,9 @@ from glob import glob
 
 from tqdm import tqdm
 
-from .config.ocr_config import OCRConfig, PreprocessingConfig
-from .core.ocr_base_engine import OCREngine
-from .enums.ocr_enum import OutputFormat
+from ocr.config.ocr_config import OCRConfig, PreprocessingConfig
+from ocr.core.ocr_base_engine import OCREngine
+from ocr.enums.ocr_enum import OutputFormat
 
 
 def setup_logging():
@@ -70,7 +70,7 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
         raise
 
 
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser(description="OCRize PDF Document")
     parser.add_argument(
         "--inputs",
@@ -88,10 +88,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if os.path.isfile(args.inputs):
+    if args.inputs and os.path.isfile(args.inputs):
         output_folder = args.inputs.replace(".pdf", "")
         process_document(args.inputs, OutputFormat[args.outputs.upper()], output_folder)
     else:
+        if not args.inputs or not os.path.isdir(args.inputs):
+            print(f"Please provide a valid folder path (got: {args.inputs})") 
+            print("for example: python main.py --inputs /path/to/folder")
+            return
         files = glob(os.path.join(args.inputs, "*.pdf"))
         assert len(files), "At least one file in the folder passed"
         for file in tqdm(files):
@@ -99,3 +103,7 @@ if __name__ == "__main__":
             process_document(
                 file, OutputFormat[args.outputs.upper()], file.replace(".pdf", "")
             )
+
+
+if __name__ == "__main__":
+    main()

@@ -1,11 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from ..enums.ocr_enum import OutputFormat
+from ocr.enums.ocr_enum import OutputFormat
 
 
-@dataclass()
+@dataclass(frozen=True)
 class PreprocessingConfig:
     """Configuration for image preprocessing steps."""
 
@@ -33,7 +33,7 @@ class OCRConfig:
     temp_dir: Path = Path("./temp")
     output_dir: Path = Path("./output")
     dpi: int = 300
-    languages: list[str] = None
+    languages: list[str] = field(default_factory=lambda: ["eng"])
     batch_size: int = 10
     preprocessing: PreprocessingConfig = PreprocessingConfig()
     output_format: OutputFormat = OutputFormat.TEXT
@@ -42,8 +42,6 @@ class OCRConfig:
         """Ensure directories exist and languages are set."""
         self.temp_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        if self.languages is None:
-            self.languages = ["eng"]
 
     def test(self):
         print("test")

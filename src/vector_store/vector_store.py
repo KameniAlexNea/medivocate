@@ -1,12 +1,11 @@
-import os
-from typing import List
+from typing import Optional
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from tqdm import tqdm
 
-from ..utilities.llm_models import get_llm_model_embedding
+from utilities.llm_models import get_llm_model_embedding, ollama_config
 
 
 class VectorStoreManager:
@@ -16,9 +15,9 @@ class VectorStoreManager:
         self.docs_dir = docs_dir
         self.persist_directory_dir = persist_directory_dir
         self.batch_size = batch_size
-        self.collection_name = os.getenv("OLLAM_EMB").split(":")[0]
+        self.collection_name = ollama_config["embedding_model"].split(":")[0]
 
-    def _batch_process_documents(self, documents: List):
+    def _batch_process_documents(self, documents: list):
         """Process documents in batches"""
         for i in tqdm(
             range(0, len(documents), self.batch_size), desc="Processing documents"
@@ -37,7 +36,7 @@ class VectorStoreManager:
                 # Add subsequent batches
                 self.vector_store.add_documents(batch)
 
-    def initialize_vector_store(self, documents: List = None):
+    def initialize_vector_store(self, documents: Optional[list] = None):
         """Initialize or load the vector store"""
         if documents:
             self._batch_process_documents(documents)
@@ -48,7 +47,7 @@ class VectorStoreManager:
                 embedding_function=self.embeddings,
             )
 
-    def load_documents(self) -> List:
+    def load_documents(self) -> list:
         """*
         Load and split documents from the specified directory
         @TODO Move this function to chunking
