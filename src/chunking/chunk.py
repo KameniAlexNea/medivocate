@@ -1,5 +1,6 @@
-from uuid import uuid4
 import logging
+from uuid import uuid4
+
 from keybert import KeyBERT
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
@@ -69,7 +70,8 @@ class ChunkingManager:
         use_llm_cleaning=False,
         use_llm_for_keywords=False,  # no use of llm for keywords, KeyBert is used instead
         summarize_before_chunk=False,  # no summarization before chunking
-        check_text_validity=True,
+        check_text_validity=True,  # check text validity using llm ? simple approach
+        llm_check_text_validity=False,  # check text validity using llm ? simple approach
         verbose=False,
         target_word_count=500,
     ):
@@ -82,21 +84,21 @@ class ChunkingManager:
             print(text)
             print(("-" * 25) + "\n")
 
-        text = self.processor.merge_sentences(text)
+        # text = self.processor.merge_sentences(text)
 
         if use_llm_cleaning:
             text = self.clean_text(text)
 
-        category = self.category_agent.process(text)
-        if verbose:
-            print("---- Document Category -----")
-            print(category)
-
         if check_text_validity:
-            if (
-                not self.processor.is_valid_file(text)
-                or "contenu" not in category.lower()
-            ):
+            checker = True
+            if llm_check_text_validity:
+                category = self.category_agent.process(text)
+                if verbose:
+                    print("---- Document Category -----")
+                    print(category)
+
+                checker = "contenu" not in category.lower()
+            if not self.processor.is_valid_file(text) and checker:
                 print(text)
                 print("The text is invalid, not retrieving documents from it.")
                 return []
@@ -148,12 +150,12 @@ class ChunkingManager:
 
 if __name__ == "__main__":
     import argparse
-    import time
-    from glob import glob
-    import os
     import json
-    from tqdm import tqdm
+    import os
     from concurrent.futures import ThreadPoolExecutor
+    from glob import glob
+
+    from tqdm import tqdm
 
     parser = argparse.ArgumentParser(description="Generate questions from text files.")
     parser.add_argument(
@@ -203,19 +205,24 @@ if __name__ == "__main__":
                 use_llm_for_keywords=False,
                 summarize_before_chunk=False,
                 check_text_validity=False,
+                llm_check_text_validity=False,
                 target_word_count=500,
             )
             return documents, file_path
         except Exception as e:
             logging.error(f"Error processing file {file_path}: {e}")
             return [], file_path
-        
+
     with ThreadPoolExecutor(max_workers=4) as executor:
-        for documents, file_path in tqdm(executor.map(get_and_save_document_chunking, files), total=len(files)):
+        for documents, file_path in tqdm(
+            executor.map(get_and_save_document_chunking, files), total=len(files)
+        ):
             if not len(documents):
                 logging.warning(f"No documents extracted from {file_path}")
             for doc in documents:
                 with open(
-                    os.path.join(args.save_folder, f"{doc.id}.json"), mode="w", encoding="utf-8"
+                    os.path.join(args.save_folder, f"{doc.id}.json"),
+                    mode="w",
+                    encoding="utf-8",
                 ) as f:
                     json.dump(doc.to_json(), f, indent=4)

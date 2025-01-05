@@ -80,13 +80,16 @@ class PDFReader:
         folder: Union[str, Path],
         batch_size: int = 8,
     ):
-        paths = glob(os.path.join(folder, "*.pdf")) + glob(os.path.join(folder, "*/*.pdf"))
+        paths = glob(os.path.join(folder, "*.pdf")) + glob(
+            os.path.join(folder, "*/*.pdf")
+        )
         for path in tqdm(paths):
             self.convert_document_to_text(path, batch_size=batch_size)
 
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+
     args = ArgumentParser()
     args.add_argument("--pdf_path", type=str, required=True)
     args.add_argument("--batch_size", type=int, default=8, required=False)

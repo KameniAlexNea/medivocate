@@ -96,7 +96,9 @@ if __name__ == "__main__":
     if os.path.isfile(args.pdf_path):
         output_folder = args.pdf_path.replace(".pdf", "")
         os.makedirs(output_folder, exist_ok=True)
-        process_document(args.pdf_path, OutputFormat[args.output_type.upper()], output_folder)
+        process_document(
+            args.pdf_path, OutputFormat[args.output_type.upper()], output_folder
+        )
     else:
         files = glob(os.path.join(args.pdf_path, "*.pdf"))
         assert len(files), "At least one file in the folder passed"
