@@ -50,3 +50,5 @@ Contient des exemples fonctionnels démontrant l'utilisation des principaux modu
   `python -m src.chunking.text_cleaner --pdf_text_path data/Books`
 * Categorized and delete unnecessary pages from documents
   `python -m src.chunking.chunk --input_folder data/Books/ --save_folder data/chunks`
+* Run create chroma database by computing embedding of all created chunk document (48k chunks documents)
+  `python -m src.chunking.create_vector_store --docs_dir data/chunks`
