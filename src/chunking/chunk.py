@@ -1,5 +1,5 @@
 from uuid import uuid4
-
+import logging
 from keybert import KeyBERT
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
@@ -7,6 +7,11 @@ from sentence_transformers import SentenceTransformer
 
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
 from .processor import Processor
+
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 class ChunkingManager:
@@ -61,8 +66,9 @@ class ChunkingManager:
     def retrieve_documents_from_file(
         self,
         file_path: str,
-        use_llm_for_keywords=True,
-        summarize_before_chunk=True,
+        use_llm_cleaning=False,
+        use_llm_for_keywords=False,  # no use of llm for keywords, KeyBert is used instead
+        summarize_before_chunk=False,  # no summarization before chunking
         check_text_validity=True,
         verbose=False,
         target_word_count=500,
@@ -78,7 +84,8 @@ class ChunkingManager:
 
         text = self.processor.merge_sentences(text)
 
-        text = self.clean_text(text)
+        if use_llm_cleaning:
+            text = self.clean_text(text)
 
         category = self.category_agent.process(text)
         if verbose:
@@ -86,10 +93,13 @@ class ChunkingManager:
             print(category)
 
         if check_text_validity:
-            if not self.processor.is_valid_file(text):
+            if (
+                not self.processor.is_valid_file(text)
+                or "contenu" not in category.lower()
+            ):
                 print(text)
                 print("The text is invalid, not retrieving documents from it.")
-                return None
+                return []
 
         if verbose:
             print("Cleaned text:\n")
@@ -124,7 +134,7 @@ class ChunkingManager:
                 print("----------------------------------------\n")
 
         documents: list[Document] = []
-        uuids = [str(uuid4()) for _ in range(len(chunks))]
+        uuids = [str(uuid4().hex) for _ in range(len(chunks))]
         for id, chunk, keywords in zip(uuids, chunks, keywords_list):
             documents.append(
                 Document(
@@ -139,10 +149,15 @@ class ChunkingManager:
 if __name__ == "__main__":
     import argparse
     import time
+    from glob import glob
+    import os
+    import json
+    from tqdm import tqdm
+    from concurrent.futures import ThreadPoolExecutor
 
     parser = argparse.ArgumentParser(description="Generate questions from text files.")
     parser.add_argument(
-        "--input_file",
+        "--input_folder",
         type=str,
         help="Path to the folder containing input text files.",
     )
@@ -158,6 +173,11 @@ if __name__ == "__main__":
         default=200,
         help="Path to the folder containing input text files.",
     )
+    parser.add_argument(
+        "--save_folder",
+        type=str,
+        help="Path to save extracted chunks",
+    )
     args = parser.parse_args()
 
     from dotenv import load_dotenv
@@ -171,43 +191,31 @@ if __name__ == "__main__":
         chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, llm=llm
     )
 
-    file_path = args.input_file
+    os.makedirs(args.save_folder, exist_ok=True)
 
-    durations = []
-    # run one time before testing the different times
-    chunkingManager.retrieve_documents_from_file(
-        file_path=file_path,
-        verbose=False,
-        use_llm_for_keywords=True,
-        summarize_before_chunk=True,
-        check_text_validity=False,
-    )
+    files = sorted(glob(os.path.join(args.input_folder, "*/*.txt")))
 
-    for use_llm in [True, False]:
-        for summ_before_chunk in [True, False]:
-            print("*" * 100)
-            print(
-                "Starting experiment with config : use_llm_for_keyword: {} - summarize_before_chunk: {}".format(
-                    use_llm, summ_before_chunk
-                )
-            )
-            print("*" * 100)
-            start = time.time()
+    def get_and_save_document_chunking(file_path):
+        try:
             documents = chunkingManager.retrieve_documents_from_file(
                 file_path=file_path,
-                verbose=True,
-                use_llm_for_keywords=use_llm,
-                summarize_before_chunk=summ_before_chunk,
+                verbose=False,
+                use_llm_for_keywords=False,
+                summarize_before_chunk=False,
                 check_text_validity=False,
+                target_word_count=500,
             )
-            durations.append(
-                [
-                    "use_llm_for_keyword: {}; summarize_before_chunk: {}".format(
-                        use_llm, summ_before_chunk
-                    ),
-                    round(time.time() - start, 5),
-                ]
-            )
-            print("\n")
-
-    print(durations)
+            return documents, file_path
+        except Exception as e:
+            logging.error(f"Error processing file {file_path}: {e}")
+            return [], file_path
+        
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        for documents, file_path in tqdm(executor.map(get_and_save_document_chunking, files), total=len(files)):
+            if not len(documents):
+                logging.warning(f"No documents extracted from {file_path}")
+            for doc in documents:
+                with open(
+                    os.path.join(args.save_folder, f"{doc.id}.json"), mode="w", encoding="utf-8"
+                ) as f:
+                    json.dump(doc.to_json(), f, indent=4)

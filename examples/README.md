@@ -46,3 +46,7 @@ Contient des exemples fonctionnels démontrant l'utilisation des principaux modu
   `python -m src.ocr.reader.reader_engine --pdf_path data/Books`
 * Add non readable documents with our OCR engine
   `python -m src.ocr.main --pdf_path data/Books`
+* Clean inplace all pages from PDF documents (at this step, you will have 12954 pages)
+  `python -m src.chunking.text_cleaner --pdf_text_path data/Books`
+* Categorized and delete unnecessary pages from documents
+  `python -m src.chunking.chunk --input_folder data/Books/ --save_folder data/chunks`
