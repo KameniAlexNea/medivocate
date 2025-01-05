@@ -14,7 +14,10 @@ class BaseAgent:
         return self.llm.invoke([("system", input_prompt)]).content.strip()
 
     def batch_process(self, texts: list[str]):
-        return [self.process(text) for text in texts]
+        texts = [
+            [("system", self.prompt_template.format(inputs=text))] for text in texts
+        ]
+        return [i.content.strip() for i in self.llm.batch(texts)]
 
     def process(self, text: str):
         return self.__call__(text)

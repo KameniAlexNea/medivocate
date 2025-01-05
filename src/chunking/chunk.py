@@ -11,12 +11,13 @@ from .processor import Processor
 
 class ChunkingManager:
     def __init__(
-        self, llm: ChatOllama, chunk_size=1000, chunk_overlap=200, nb_keywords=3
+        self, llm: ChatOllama, chunk_size=1000, chunk_overlap=200, top_n=3, keyphrase_ngram_range=(1, 2)
     ):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        self.nb_keywords = nb_keywords
         self.llm = llm
+        self.top_n = top_n
+        self.keyphrase_ngram_range = keyphrase_ngram_range
         self.kwb = KeyBERT(SentenceTransformer("all-mpnet-base-v2", device="cuda:0"))
 
         self.summary_agent = SummaryAgent(llm)
@@ -38,9 +39,8 @@ class ChunkingManager:
         for paragraph in paragraphs:
             keywords = self.kwb.extract_keywords(
                 paragraph,
-                keyphrase_ngram_range=(1, 2),
-                stop_words="french",
-                top_n=self.nb_keywords,
+                top_n=self.top_n,
+                keyphrase_ngram_range=self.keyphrase_ngram_range
             )
             keywords = [kw[0] for kw in keywords]
             keywords_list.append(keywords)
@@ -127,6 +127,18 @@ if __name__ == "__main__":
         type=str,
         help="Path to the folder containing input text files.",
     )
+    parser.add_argument(
+        "--chunk_size",
+        type=int,
+        default=1000,
+        help="Path to the folder containing input text files.",
+    )
+    parser.add_argument(
+        "--chunk_overlap",
+        type=int,
+        default=200,
+        help="Path to the folder containing input text files.",
+    )
     args = parser.parse_args()
 
     from dotenv import load_dotenv
@@ -136,7 +148,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     llm = get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
-    chunkingManager = ChunkingManager(chunk_size=300, chunk_overlap=50, llm=llm)
+    chunkingManager = ChunkingManager(chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, llm=llm)
 
     file_path = args.input_file
 
