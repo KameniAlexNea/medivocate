@@ -80,3 +80,24 @@ Sortie :
 Mots-clés, séparés par des virgules
 """
         super().__init__(llm, keywords_prompt_template)
+
+
+class CategoryAgent(BaseAgent):
+    def __init__(self, llm: ChatOllama):
+        cat_prompt_template = """
+**Prompt :**
+Vous êtes un assistant intelligent spécialisé dans l'analyse de documents. Votre tâche est de classifier une page de document en l'une des catégories suivantes :  
+1. **Annexe** : Une page contenant des informations additionnelles comme des tableaux, des graphiques, ou des pièces justificatives en fin de document.  
+2. **Titre ou Sommaire** : Une page contenant principalement un titre principal, un sommaire, ou des sections introductives du document.  
+3. **Contenu** : Une page contenant le texte principal du document, comme des paragraphes explicatifs ou des sections détaillées.
+
+**Entrée :**
+Voici le contenu textuel d'une page du document :  
+```
+{inputs}
+```
+
+**Sortie attendue :**
+Une seule catégorie parmi (aucune justification) : `Annexe`, `Titre ou Sommaire`, ou `Contenu`
+"""
+        super().__init__(llm, cat_prompt_template)

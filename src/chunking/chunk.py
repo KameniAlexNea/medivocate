@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 
-from .agents import CleanAgent, KeyWordAgent, SummaryAgent
+from .agents import CleanAgent, KeyWordAgent, SummaryAgent, CategoryAgent
 from .processor import Processor
 
 
@@ -23,6 +23,7 @@ class ChunkingManager:
         self.summary_agent = SummaryAgent(llm)
         self.clean_agent = CleanAgent(llm)
         self.keyword_agent = KeyWordAgent(llm)
+        self.category_agent = CategoryAgent(llm)
         self.processor = Processor(chunk_size, chunk_overlap)
 
     def clean_text(self, text):
@@ -46,7 +47,7 @@ class ChunkingManager:
             keywords_list.append(keywords)
         return keywords_list
 
-    def split_text_into_large_chunks(self, text: str, target_word_count=300):
+    def split_text_into_large_chunks(self, text: str, target_word_count=500):
         """
         on splitte le texte en chunks qui vont être résumés par la suite
         """
@@ -59,17 +60,25 @@ class ChunkingManager:
         summarize_before_chunk=True,
         check_text_validity=True,
         verbose=False,
+        target_word_count=500
     ):
         with open(file_path, mode="r") as f:
             text = f.read()
 
         if verbose:
-            print("Raw text:")
+            print(("*"*38) + "\n")
+            print("Raw text:\n")
             print(text)
+            print(("-"*25) + "\n")
 
         text = self.processor.merge_sentences(text)
 
         text = self.clean_text(text)
+
+        category = self.category_agent.process(text)
+        if verbose:
+            print("---- Document Category -----")
+            print(category)
 
         if check_text_validity:
             if not self.processor.is_valid_file(text):
@@ -78,19 +87,21 @@ class ChunkingManager:
                 return None
 
         if verbose:
-            print("Cleaned text:")
+            print("Cleaned text:\n")
             print(text)
-            print("***********************************\n")
+            print(("*"*38) + "\n")
 
         if summarize_before_chunk:
-            large_chunks = self.split_text_into_large_chunks(text)
+            large_chunks = self.split_text_into_large_chunks(text, target_word_count=target_word_count)
             summaries = self.generate_summaries(large_chunks)
 
             if verbose:
+                print("****** Summary ******")
                 for chunk, summary in zip(large_chunks, summaries):
-                    print("Text: ", chunk)
-                    print("Summary: ", summary)
-                    print("---------------------------------------")
+                    print("\n---------------------------------------")
+                    print("Text: \n", chunk, "\n")
+                    print("Summary: \n", summary, "\n")
+                    print("---------------------------------------\n")
 
             text = "\n".join(summaries)
 
@@ -98,11 +109,12 @@ class ChunkingManager:
         keywords_list = self.generate_keywords(chunks, use_llm=use_llm_for_keywords)
 
         if verbose:
-            print("Final chunks and their keywords: ")
+            print("****** Chunks and Keywords ******")
             for chunk, keywords in zip(chunks, keywords_list):
-                print("Chunk: ", chunk)
-                print("Keywords: ", keywords)
-                print("----------------------------------------")
+                print("\n---------------------------------------")
+                print("Chunk: \n", chunk)
+                print("Keywords: \n", keywords)
+                print("----------------------------------------\n")
 
         documents = []
         uuids = [str(uuid4()) for _ in range(len(chunks))]
@@ -165,15 +177,15 @@ if __name__ == "__main__":
     for use_llm in [True, False]:
         for summ_before_chunk in [True, False]:
             print(
-                "***************************************************************************************************"
+                "*"*100
             )
             print(
-                "use_llm_for_keyword: {}; summarize_before_chunk: {}".format(
+                "Starting experiment with config : use_llm_for_keyword: {} - summarize_before_chunk: {}".format(
                     use_llm, summ_before_chunk
                 )
             )
             print(
-                "***************************************************************************************************"
+                "*"*100
             )
             start = time.time()
             documents = chunkingManager.retrieve_documents_from_file(
