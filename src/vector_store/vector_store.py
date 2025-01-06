@@ -106,7 +106,7 @@ class VectorStoreManager:
             )
 
         return documents
-    
+
     def load_documents(self) -> List:
         files = glob(os.path.join(self.docs_dir, "*.json"))
         if len(files):

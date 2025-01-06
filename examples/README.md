@@ -1,6 +1,3 @@
-
-
-
 # Examples
 
 This guide provides functional examples demonstrating the use of the main modules.
@@ -17,7 +14,7 @@ If you have access to the pre-embedded documents stored in ChromaDB, you can ski
 
   Access the pre-embedded documents from [this link](https://drive.google.com/drive/folders/1MJlkbD_omZ_nUt8EGtOD9fI17BZ8MNmR).
 
-No further processing is needed if you use this option.
+No further processing is needed if you use this option. Add it to the folder `data/gradio`
 
 ---
 
@@ -95,6 +92,8 @@ If the pre-embedded documents are unavailable, follow these steps:
 * **Support:**
 
   For additional help, consult the relevant module documentation or contact the support team.
+* Launch Chat Interface
+  `python -m src.chat_interface.chat_ui`
 
 ## All avalaible documents in this project
 

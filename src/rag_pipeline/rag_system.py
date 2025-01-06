@@ -13,7 +13,7 @@ from ..vector_store.vector_store import VectorStoreManager
 class RAGSystem:
     def __init__(
         self,
-        docs_dir: str = "data/docs",
+        docs_dir: str = "data/chunks",
         persist_directory_dir="data/chroma_db",
         batch_size: int = 64,
         top_k_documents=5,
@@ -27,7 +27,7 @@ class RAGSystem:
         )
 
     def _get_llm(self):
-        return get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=150)
+        return get_llm_model_chat("GROQ", temperature=0.1, max_tokens=500)
 
     def _get_embeddings(self):
         """Initialize embeddings based on environment configuration"""
@@ -45,19 +45,22 @@ class RAGSystem:
         if self.chain is not None:
             return
         """Set up the RAG chain with custom prompt"""
-        prompt_template = """Using the context provided below, answer the question that follows as accurately as possible.
-If the answer cannot be determined from the context, respond with "I don't know." Avoid making up information.
+        prompt_template = """Inspirez vous du contexte fourni ci-dessous pour répondre à la question qui suit de la manière la plus précise possible.  
+Si la réponse ne peut pas être déterminée à partir du contexte, évitez d'inventer des informations.
 
-**Context**: 
+**Historique** :
+{history}
+
+**Contexte** : 
 {context}
 
-**Question**: 
+**Question** :
 {input}
 
-Answer (You should answer in the same language as the given question):"""
+Réponse (Vous devez répondre dans la même langue que celle de la question) :"""
 
         prompt = PromptTemplate(
-            template=prompt_template, input_variables=["context", "input"]
+            template=prompt_template, input_variables=["context", "input", "history"]
         )
         retriever = self.vector_store_management.vector_store.as_retriever(
             search_kwargs={"k": self.top_k_documents}
@@ -66,26 +69,38 @@ Answer (You should answer in the same language as the given question):"""
 
         self.chain = create_retrieval_chain(retriever, question_answer_chain)
 
-    def query(self, question: str):
+    def query(self, question: str, history: List[tuple[str]] = []):
         """Query the RAG system"""
         if not self.vector_store_management.vector_store:
             self.initialize_vector_store()
 
         self.setup_rag_chain()
-        response = self.chain.invoke({"input": question})
+
+        # Format history as a single string of interactions
+        history_text = "\n".join(
+            [f"Utilisateur: {user}\nAssistant: {assistant}" for user, assistant in history]
+        )
+
+        response = self.chain.invoke({"input": question,  "history": history_text})
 
         return {
             "answer": response["answer"],
             "source_documents": [doc.page_content for doc in response["context"]],
         }
 
-    def query_iter(self, question: str):
+    def query_iter(self, question: str, history: List[tuple[str]] = []):
         """Query the RAG system"""
         if not self.vector_store_management.vector_store:
             self.initialize_vector_store()
 
         self.setup_rag_chain()
-        for token in self.chain.stream({"input": question}):
+
+        # Format history as a single string of interactions
+        history_text = "\n".join(
+            [f"Utilisateur: {user}\nAssistant: {assistant}" for user, assistant in history]
+        )
+
+        for token in self.chain.stream({"input": question, "history": history_text}):
             if "answer" in token:
                 yield token["answer"]
 
