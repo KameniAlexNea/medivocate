@@ -1,12 +1,31 @@
+import json
 import os
+from concurrent.futures import ThreadPoolExecutor
+from glob import glob
 from typing import List
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_core.documents import Document
 from tqdm import tqdm
 
 from ..utilities.llm_models import get_llm_model_embedding
+
+
+def sanitize_metadata(metadata):
+    sanitized = {}
+    for key, value in metadata.items():
+        if isinstance(value, list):
+            # Convert lists to comma-separated strings or handle appropriately
+            sanitized[key] = ", ".join(value)
+        elif isinstance(value, (str, int, float, bool)):
+            sanitized[key] = value
+        else:
+            raise ValueError(
+                f"Unsupported metadata type for key '{key}': {type(value)}"
+            )
+    return sanitized
 
 
 class VectorStoreManager:
@@ -48,7 +67,7 @@ class VectorStoreManager:
                 embedding_function=self.embeddings,
             )
 
-    def load_documents(self) -> List:
+    def _load_text_documents(self) -> List:
         """*
         Load and split documents from the specified directory
         @TODO Move this function to chunking
@@ -62,3 +81,34 @@ class VectorStoreManager:
             length_function=len,
         )
         return splitter.split_documents(documents)
+
+    def _load_json_documents(self) -> List:
+        """*
+        Load and split documents from the specified directory
+        @TODO Move this function to chunking
+        """
+        files = glob(os.path.join(self.docs_dir, "*.json"))
+
+        def load_json_file(file_path):
+            with open(file_path, "r") as f:
+                data = json.load(f)["kwargs"]
+            return Document.model_validate(
+                {**data, "metadata": sanitize_metadata(data["metadata"])}
+            )
+
+        with ThreadPoolExecutor() as executor:
+            documents = list(
+                tqdm(
+                    executor.map(load_json_file, files),
+                    total=len(files),
+                    desc="Loading JSON documents",
+                )
+            )
+
+        return documents
+
+    def load_documents(self) -> List:
+        files = glob(os.path.join(self.docs_dir, "*.json"))
+        if len(files):
+            return self._load_json_documents()
+        return self._load_text_documents()

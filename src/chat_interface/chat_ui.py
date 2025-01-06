@@ -11,11 +11,11 @@ class ChatInterface:
         self.chat_history: List[Dict] = []
 
     def respond(self, message: str, history: List[List[str]]):
-        response = self.rag_system.query(message)
-        sources = "\n\nSources:\n" + "\n".join(
-            f"- {source[:500]}..." for source in response["source_documents"]
-        )
-        return response["answer"] + sources
+        result = ""
+        for text in self.rag_system.query_iter(message, history):
+            result += text
+            yield result
+        return result
 
     def create_interface(self):
         chat_interface = gr.ChatInterface(
@@ -25,7 +25,7 @@ class ChatInterface:
             retry_btn=None,
             undo_btn=None,
             clear_btn="Clear",
-            chatbot=gr.Chatbot(show_copy_button=True),
+            # chatbot=gr.Chatbot(show_copy_button=True),
         )
         return chat_interface
 
@@ -36,9 +36,8 @@ class ChatInterface:
 
 # Usage example:
 if __name__ == "__main__":
-    rag_system = RAGSystem()
-    documents = None  # rag_system.load_documents()
-    rag_system.initialize_vector_store(documents)
+    rag_system = RAGSystem(top_k_documents=12)
+    rag_system.initialize_vector_store()
 
     chat_interface = ChatInterface(rag_system)
-    chat_interface.launch()
+    chat_interface.launch(share=False)
