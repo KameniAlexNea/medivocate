@@ -1,9 +1,10 @@
+import os
 from typing import Dict, List
 
 import gradio as gr
 
 from ..rag_pipeline.rag_system import RAGSystem
-
+os.environ["TOKENIZERS_PARALLELISM"]="true"
 
 class ChatInterface:
     def __init__(self, rag_system: RAGSystem):

@@ -19,7 +19,6 @@ class RAGSystem:
         top_k_documents=5,
     ):
         self.top_k_documents = top_k_documents
-        self.embeddings = self._get_embeddings()
         self.llm = self._get_llm()
         self.chain: Optional[Runnable] = None
         self.vector_store_management = VectorStoreManager(
@@ -29,9 +28,6 @@ class RAGSystem:
     def _get_llm(self):
         return get_llm_model_chat("GROQ", temperature=0.1, max_tokens=500)
 
-    def _get_embeddings(self):
-        """Initialize embeddings based on environment configuration"""
-        return get_llm_model_embedding()
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
@@ -47,6 +43,8 @@ class RAGSystem:
         """Set up the RAG chain with custom prompt"""
         prompt_template = """Inspirez vous du contexte fourni ci-dessous pour répondre à la question qui suit de la manière la plus précise possible.  
 Si la réponse ne peut pas être déterminée à partir du contexte, évitez d'inventer des informations.
+L'historique ici fait référence aux précédents échanges avec un utilisateur, tu devrais l'ignore si aucun rapport avec la question posée.
+Tes réponses doivent être naturelles sous forme de faits, au lieu de faire mention du fait que réponds en fonction d'un contexte.
 
 **Historique** :
 {history}

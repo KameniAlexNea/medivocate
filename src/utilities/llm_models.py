@@ -4,6 +4,7 @@ from typing import Union
 
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 
 class LLMModel(Enum):
@@ -37,6 +38,12 @@ def get_llm_model_chat(
 
 
 def get_llm_model_embedding():
+    if os.getenv("USE_HF"):
+        return HuggingFaceEmbeddings(
+            model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
     return OllamaEmbeddings(
         model=os.getenv("OLLAM_EMB"),
         base_url=os.getenv("OLLAMA_HOST"),

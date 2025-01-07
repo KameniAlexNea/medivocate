@@ -2,6 +2,7 @@ langchain-ollama==0.2.2
 langchain-groq==0.2.2
 langchain-community==0.3.14
 langchain-chroma==0.1.4
+langchain-huggingface
 langchain==0.3.13
 ollama==0.4.5
 chromadb==0.5.23
