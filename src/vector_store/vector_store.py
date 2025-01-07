@@ -1,24 +1,64 @@
+import os
+from typing import List
+
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from tqdm import tqdm
+
+from ..utilities.llm_models import get_llm_model_embedding
 
 
+class VectorStoreManager:
+    def __init__(self, docs_dir: str, persist_directory_dir: str, batch_size=64):
+        self.embeddings = get_llm_model_embedding()
+        self.vector_store = None
+        self.docs_dir = docs_dir
+        self.persist_directory_dir = persist_directory_dir
+        self.batch_size = batch_size
+        self.collection_name = os.getenv("OLLAM_EMB").split(":")[0]
 
-from chunking.chunk import get_chunks, get_keywords
-from sentence_transformers import SentenceTransformer
+    def _batch_process_documents(self, documents: List):
+        """Process documents in batches"""
+        for i in tqdm(
+            range(0, len(documents), self.batch_size), desc="Processing documents"
+        ):
+            batch = documents[i : i + self.batch_size]
 
-def store_embeddings(file_path, embedding_version, chunk_size, chunk_overlap):
-    with open(file_path, "r", encoding="utf-8") as file:
-        text = file.read()
+            if not self.vector_store:
+                # Initialize vector store with first batch
+                self.vector_store = Chroma.from_documents(
+                    collection_name=self.collection_name,
+                    documents=batch,
+                    embedding=self.embeddings,
+                    persist_directory=self.persist_directory_dir,
+                )
+            else:
+                # Add subsequent batches
+                self.vector_store.add_documents(batch)
 
-    chunks = get_chunks(text, chunk_size, chunk_overlap)
-    keywords = get_keywords(chunks, embedding_version)
+    def initialize_vector_store(self, documents: List = None):
+        """Initialize or load the vector store"""
+        if documents:
+            self._batch_process_documents(documents)
+        else:
+            self.vector_store = Chroma(
+                collection_name=self.collection_name,
+                persist_directory=self.persist_directory_dir,
+                embedding_function=self.embeddings,
+            )
 
-    embedding_model = SentenceTransformer(embedding_version)
-    embeddings = [embedding_model.encode(chunk) for chunk in chunks]
+    def load_documents(self) -> List:
+        """*
+        Load and split documents from the specified directory
+        @TODO Move this function to chunking
+        """
+        loader = DirectoryLoader(self.docs_dir, glob="**/*.txt", loader_cls=TextLoader)
+        documents = loader.load()
 
-    metadata = [
-        {"chunk_index": i, "keywords": keywords[i], "source_file":file_path}
-    for i in range(len(chunks))
-    ]
-
-    for i in range(min(10, len(chunks))):
-        print(f"Chunk {i+1}: {chunks[i]}")
-        print(f"Keywords: {metadata[i]['keywords']}")
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len,
+        )
+        return splitter.split_documents(documents)

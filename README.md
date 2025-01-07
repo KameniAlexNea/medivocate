@@ -2,6 +2,7 @@
 
 An AI-driven platform empowering patients with trustworthy, personalized medical guidance to combat misinformation and promote equitable healthcare.
 
+```
 📦 ./
 ├── 📁 docs/
 ├── 📁 src/
@@ -23,6 +24,7 @@ An AI-driven platform empowering patients with trustworthy, personalized medical
 ├── 📄 requirements.txt
 ├── 📄 .gitignore
 └── 📄 LICENSE
+```
 
 ## Description des Dossiers et Fichiers
 

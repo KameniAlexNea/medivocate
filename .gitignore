@@ -173,3 +173,5 @@ cython_debug/
 
 # store all dataset here
 data
+
+*.out
