@@ -27,6 +27,11 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
         output_format (OutputFormat): Desired output format (TEXT, JSON, XML).
         output_folder (str): Destination folder for the output file.
     """
+    test_pdf_readable = len(glob(os.path.join(output_folder, "*.txt"))) > 2
+    if test_pdf_readable:
+        logging.info(f"Skipping {file_path} as it is already processed")
+        return
+    logging.info(f"Processing {file_path}")
     # Setup logging
     setup_logging()
 
@@ -73,13 +78,13 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
 if __name__ == "__main__":
     parser = ArgumentParser(description="OCRize PDF Document")
     parser.add_argument(
-        "--inputs",
+        "--pdf_path",
         required=False,
         type=str,
         help="Path to the file or folder containing list of files",
     )
     parser.add_argument(
-        "--outputs",
+        "--output_type",
         default="text",
         required=False,  # output format is computed
         type=str,
@@ -88,14 +93,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if os.path.isfile(args.inputs):
-        output_folder = args.inputs.replace(".pdf", "")
-        process_document(args.inputs, OutputFormat[args.outputs.upper()], output_folder)
+    if os.path.isfile(args.pdf_path):
+        output_folder = args.pdf_path.replace(".pdf", "")
+        os.makedirs(output_folder, exist_ok=True)
+        process_document(
+            args.pdf_path, OutputFormat[args.output_type.upper()], output_folder
+        )
     else:
-        files = glob(os.path.join(args.inputs, "*.pdf"))
+        files = glob(os.path.join(args.pdf_path, "*.pdf"))
         assert len(files), "At least one file in the folder passed"
         for file in tqdm(files):
-            os.makedirs(file.replace(".pdf", ""), exist_ok=True)
+            output_folder = file.replace(".pdf", "")
+            os.makedirs(output_folder, exist_ok=True)
             process_document(
-                file, OutputFormat[args.outputs.upper()], file.replace(".pdf", "")
+                file, OutputFormat[args.output_type.upper()], output_folder
             )
