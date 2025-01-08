@@ -1,13 +1,15 @@
+import logging
 import os
 from typing import List, Optional
 
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.prompts import PromptTemplate
-from langchain_core.runnables import Runnable
+from langchain.chains.conversation.memory import ConversationBufferMemory
+from langchain.chains.conversational_retrieval.base import (
+    ConversationalRetrievalChain,
+)
 
-from ..utilities.llm_models import get_llm_model_chat, get_llm_model_embedding
+from ..utilities.llm_models import get_llm_model_chat
 from ..vector_store.vector_store import VectorStoreManager
+from .prompts import CHAT_PROMPT
 
 
 class RAGSystem:
@@ -20,14 +22,15 @@ class RAGSystem:
     ):
         self.top_k_documents = top_k_documents
         self.llm = self._get_llm()
-        self.chain: Optional[Runnable] = None
+        self.chain: Optional[ConversationalRetrievalChain] = None
         self.vector_store_management = VectorStoreManager(
             docs_dir, persist_directory_dir, batch_size
         )
 
-    def _get_llm(self):
-        return get_llm_model_chat("GROQ", temperature=0.1, max_tokens=500)
-
+    def _get_llm(
+        self,
+    ):
+        return get_llm_model_chat(temperature=0.1, max_tokens=500)
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
@@ -40,65 +43,30 @@ class RAGSystem:
     def setup_rag_chain(self):
         if self.chain is not None:
             return
-        """Set up the RAG chain with custom prompt"""
-        prompt_template = """Inspirez vous du contexte fourni ci-dessous pour répondre à la question qui suit de la manière la plus précise possible.  
-Si la réponse ne peut pas être déterminée à partir du contexte, évitez d'inventer des informations.
-L'historique ici fait référence aux précédents échanges avec un utilisateur, tu devrais l'ignore si aucun rapport avec la question posée.
-Tes réponses doivent être naturelles sous forme de faits, au lieu de faire mention du fait que réponds en fonction d'un contexte.
-
-**Historique** :
-{history}
-
-**Contexte** : 
-{context}
-
-**Question** :
-{input}
-
-Réponse (Vous devez répondre dans la même langue que celle de la question) :"""
-
-        prompt = PromptTemplate(
-            template=prompt_template, input_variables=["context", "input", "history"]
+        chain_type_kwargs = {"prompt": CHAT_PROMPT}
+        memory = ConversationBufferMemory(
+            memory_key="chat_history", return_messages=True
         )
         retriever = self.vector_store_management.vector_store.as_retriever(
             search_kwargs={"k": self.top_k_documents}
         )
-        question_answer_chain = create_stuff_documents_chain(self.llm, prompt)
+        self.chain = ConversationalRetrievalChain.from_llm(
+            llm=self.llm,
+            retriever=retriever,
+            combine_docs_chain_kwargs=chain_type_kwargs,
+            chain_type="stuff",
+            memory=memory,
+        )
+        logging.info("RAG chain setup complete" + str(self.chain))
 
-        self.chain = create_retrieval_chain(retriever, question_answer_chain)
-
-    def query(self, question: str, history: List[tuple[str]] = []):
+    def query(self, question: str):
         """Query the RAG system"""
         if not self.vector_store_management.vector_store:
             self.initialize_vector_store()
 
         self.setup_rag_chain()
 
-        # Format history as a single string of interactions
-        history_text = "\n".join(
-            [f"Utilisateur: {user}\nAssistant: {assistant}" for user, assistant in history]
-        )
-
-        response = self.chain.invoke({"input": question,  "history": history_text})
-
-        return {
-            "answer": response["answer"],
-            "source_documents": [doc.page_content for doc in response["context"]],
-        }
-
-    def query_iter(self, question: str, history: List[tuple[str]] = []):
-        """Query the RAG system"""
-        if not self.vector_store_management.vector_store:
-            self.initialize_vector_store()
-
-        self.setup_rag_chain()
-
-        # Format history as a single string of interactions
-        history_text = "\n".join(
-            [f"Utilisateur: {user}\nAssistant: {assistant}" for user, assistant in history]
-        )
-
-        for token in self.chain.stream({"input": question, "history": history_text}):
+        for token in self.chain.stream({"question": question}):
             if "answer" in token:
                 yield token["answer"]
 

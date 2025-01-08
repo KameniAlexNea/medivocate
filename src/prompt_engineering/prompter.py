@@ -37,6 +37,6 @@ if __name__ == "__main__":
     args.add_argument("--prompt", type=str)
     parse = args.parse_args()
 
-    llm = get_llm_model_chat("OLLAMA", temperature=0.7, max_tokens=256)
+    llm = get_llm_model_chat(temperature=0.7, max_tokens=256)
     prompt = Prompter(llm)
     print(prompt(parse.prompt).content)

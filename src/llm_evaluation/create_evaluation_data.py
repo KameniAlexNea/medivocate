@@ -30,7 +30,7 @@ def generate_questions(input_folder: str, n_files: int, output_folder: str):
     if len(files):
         files = random.sample(files, min(n_files, len(files)))
 
-        llm = get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=1000)
+        llm = get_llm_model_chat(temperature=0.1, max_tokens=1000)
 
         for file in tqdm(files):
             lines = open(file).read()
