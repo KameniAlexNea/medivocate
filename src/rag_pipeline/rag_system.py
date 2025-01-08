@@ -2,14 +2,18 @@ import logging
 import os
 from typing import List, Optional
 
-from langchain.chains.conversation.memory import ConversationBufferMemory
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.conversational_retrieval.base import (
     ConversationalRetrievalChain,
 )
+from langchain.chains.history_aware_retriever import (
+    create_history_aware_retriever,
+)
+from langchain.chains.retrieval import create_retrieval_chain
 
 from ..utilities.llm_models import get_llm_model_chat
 from ..vector_store.vector_store import VectorStoreManager
-from .prompts import CHAT_PROMPT
+from .prompts import CHAT_PROMPT, CONTEXTUEL_QUERY_PROMPT
 
 
 class RAGSystem:
@@ -30,7 +34,7 @@ class RAGSystem:
     def _get_llm(
         self,
     ):
-        return get_llm_model_chat(temperature=0.1, max_tokens=500)
+        return get_llm_model_chat(temperature=0.1, max_tokens=1000)
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
@@ -43,30 +47,29 @@ class RAGSystem:
     def setup_rag_chain(self):
         if self.chain is not None:
             return
-        chain_type_kwargs = {"prompt": CHAT_PROMPT}
-        memory = ConversationBufferMemory(
-            memory_key="chat_history", return_messages=True
-        )
         retriever = self.vector_store_management.vector_store.as_retriever(
             search_kwargs={"k": self.top_k_documents}
         )
-        self.chain = ConversationalRetrievalChain.from_llm(
-            llm=self.llm,
-            retriever=retriever,
-            combine_docs_chain_kwargs=chain_type_kwargs,
-            chain_type="stuff",
-            memory=memory,
+
+        # Contextualize question
+        history_aware_retriever = create_history_aware_retriever(
+            self.llm, retriever, CONTEXTUEL_QUERY_PROMPT
+        )
+        question_answer_chain = create_stuff_documents_chain(self.llm, CHAT_PROMPT)
+        self.chain = create_retrieval_chain(
+            history_aware_retriever, question_answer_chain
         )
         logging.info("RAG chain setup complete" + str(self.chain))
+        return self.chain
 
-    def query(self, question: str):
+    def query(self, question: str, history: list = []):
         """Query the RAG system"""
         if not self.vector_store_management.vector_store:
             self.initialize_vector_store()
 
         self.setup_rag_chain()
 
-        for token in self.chain.stream({"question": question}):
+        for token in self.chain.stream({"input": question, "chat_history": history}):
             if "answer" in token:
                 yield token["answer"]
 

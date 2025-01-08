@@ -1,6 +1,7 @@
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
+    MessagesPlaceholder,
     SystemMessagePromptTemplate,
 )
 
@@ -18,7 +19,25 @@ Si vous connaissez la réponse à la question mais que cette réponse ne provien
 """
 
 messages = [
+    MessagesPlaceholder(variable_name="chat_history"),
     SystemMessagePromptTemplate.from_template(system_template),
-    HumanMessagePromptTemplate.from_template("{question}"),
+    HumanMessagePromptTemplate.from_template("{input}"),
 ]
 CHAT_PROMPT = ChatPromptTemplate.from_messages(messages)
+
+
+contextualize_q_system_prompt = (
+    "Étant donné un historique de conversation et la dernière question de l'utilisateur "
+    "qui pourrait faire référence au contexte dans l'historique de conversation, "
+    "formulez une question autonome qui peut être comprise "
+    "sans l'historique de conversation. NE répondez PAS à la question, reformulez-la "
+    "si nécessaire, sinon retournez-la telle quelle."
+)
+
+CONTEXTUEL_QUERY_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        SystemMessagePromptTemplate.from_template(contextualize_q_system_prompt),
+        MessagesPlaceholder("chat_history"),
+        HumanMessagePromptTemplate.from_template("{input}"),
+    ]
+)

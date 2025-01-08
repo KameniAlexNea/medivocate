@@ -5,7 +5,7 @@ from typing import Dict, List
 import gradio as gr
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.ERROR,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
@@ -22,7 +22,7 @@ class ChatInterface:
     def respond(self, message: str, history: List[List[str]]):
         result = ""
         logging.info(f"Received message: {message}")
-        for text in self.rag_system.query(message):
+        for text in self.rag_system.query(message, history):
             result += text
             yield result
         return result
@@ -32,7 +32,7 @@ class ChatInterface:
             fn=self.respond,
             type="messages",
             title="Medivocate",
-            description="Medivocate is an AI-driven platform leveraging Retrieval-Augmented Generation (RAG) powered by African history. It processes and classifies document pages with precision to provide trustworthy, personalized guidance, fostering accurate knowledge and equitable access to historical insights.",
+            description="Medivocate est une application qui offre des informations claires et structurées sur l'histoire de l'Afrique et sa médecine traditionnelle, en s'appuyant exclusivement sur un contexte issu de documentaires sur l'histoire du continent africain.",
             # retry_btn=None,
             # undo_btn=None,
             # clear_btn="Clear",
@@ -47,7 +47,7 @@ class ChatInterface:
 
 # Usage example:
 if __name__ == "__main__":
-    rag_system = RAGSystem(top_k_documents=12, model_type="ollama")
+    rag_system = RAGSystem(top_k_documents=12)
     rag_system.initialize_vector_store()
 
     chat_interface = ChatInterface(rag_system)
