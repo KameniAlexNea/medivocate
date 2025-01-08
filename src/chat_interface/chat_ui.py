@@ -1,8 +1,11 @@
+import os
 from typing import Dict, List
 
 import gradio as gr
 
 from ..rag_pipeline.rag_system import RAGSystem
+
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 
 class ChatInterface:
@@ -12,7 +15,8 @@ class ChatInterface:
 
     def respond(self, message: str, history: List[List[str]]):
         result = ""
-        for text in self.rag_system.query_iter(message, history):
+        history = [(turn["role"], turn["content"]) for turn in history]
+        for text in self.rag_system.query(message, history):
             result += text
             yield result
         return result
@@ -20,12 +24,9 @@ class ChatInterface:
     def create_interface(self):
         chat_interface = gr.ChatInterface(
             fn=self.respond,
+            type="messages",
             title="Medivocate",
-            description="Medivocate is an AI-driven platform leveraging Retrieval-Augmented Generation (RAG) powered by African history. It processes and classifies document pages with precision to provide trustworthy, personalized guidance, fostering accurate knowledge and equitable access to historical insights.",
-            retry_btn=None,
-            undo_btn=None,
-            clear_btn="Clear",
-            # chatbot=gr.Chatbot(show_copy_button=True),
+            description="Medivocate est une application qui offre des informations claires et structurées sur l'histoire de l'Afrique et sa médecine traditionnelle, en s'appuyant exclusivement sur un contexte issu de documentaires sur l'histoire du continent africain.",
         )
         return chat_interface
 

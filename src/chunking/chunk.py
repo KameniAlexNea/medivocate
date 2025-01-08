@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
     load_dotenv()
 
-    llm = get_llm_model_chat("OLLAMA", temperature=0.1, max_tokens=256)
+    llm = get_llm_model_chat(temperature=0.1, max_tokens=256)
     chunkingManager = ChunkingManager(
         chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, llm=llm
     )
