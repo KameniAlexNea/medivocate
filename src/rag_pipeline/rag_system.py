@@ -47,8 +47,8 @@ class RAGSystem:
     def setup_rag_chain(self):
         if self.chain is not None:
             return
-        retriever = self.vector_store_management.vector_store.as_retriever(
-            search_kwargs={"k": self.top_k_documents}
+        retriever = self.vector_store_management.create_retriever(
+            self.top_k_documents, bm25_portion=.3
         )
 
         # Contextualize question
