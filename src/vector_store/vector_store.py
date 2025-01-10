@@ -89,13 +89,12 @@ class VectorStoreManager:
         self.vs_initialized = True
 
     def create_retriever(self, n_documents: int, bm25_portion: float = 0.4):
-        bmk = int(n_documents * bm25_portion)
-        self.vector_stores["bm25"].k = bmk
+        self.vector_stores["bm25"].k = n_documents
         self.vector_store = EnsembleRetriever(
             retrievers=[
                 self.vector_stores["bm25"],
                 self.vector_stores["chroma"].as_retriever(
-                    search_kwargs={"k": n_documents - bmk}
+                    search_kwargs={"k": n_documents}
                 ),
             ],
             weights=[bm25_portion, 1 - bm25_portion],
