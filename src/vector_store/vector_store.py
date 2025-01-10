@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 from glob import glob
 from typing import List
 
+from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
@@ -32,6 +34,10 @@ class VectorStoreManager:
     def __init__(self, docs_dir: str, persist_directory_dir: str, batch_size=64):
         self.embeddings = get_llm_model_embedding()
         self.vector_store = None
+        self.vector_stores = {
+            "chroma": None,
+            "bm25": None
+        }
         self.docs_dir = docs_dir
         self.persist_directory_dir = persist_directory_dir
         self.batch_size = batch_size
@@ -61,11 +67,23 @@ class VectorStoreManager:
         if documents:
             self._batch_process_documents(documents)
         else:
-            self.vector_store = Chroma(
+            chroma_vs = Chroma(
                 collection_name=self.collection_name,
                 persist_directory=self.persist_directory_dir,
                 embedding_function=self.embeddings,
             )
+            if documents is None:
+                all_documents = chroma_vs.get(include=["documents"])
+                documents = [
+                    Document(page_content=content, id=doc_id) for content, doc_id in zip(
+                        all_documents["documents"], all_documents["ids"]
+                    )
+                ]
+            bm25_vs: BM25Retriever = BM25Retriever.from_documents(
+                documents=documents
+            )
+            self.vector_stores["chroma"] = chroma_vs
+            self.vector_stores["bm25"] = bm25_vs
 
     def _load_text_documents(self) -> List:
         """*
