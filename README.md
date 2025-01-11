@@ -1,6 +1,8 @@
-# medivocate
+# [medivocate](https://huggingface.co/spaces/alexneakameni/medivocate)
 
 An AI-driven platform empowering users with trustworthy, personalized history guidance to combat misinformation and promote equitable history.
+
+Deployed on [HF Space](https://huggingface.co/spaces/alexneakameni/medivocate)
 
 ```
 📦 ./
@@ -87,11 +89,4 @@ LangSmith is developed and maintained by [LangChain](https://langchain.com/), th
 * **one-line dataloaders for many public datasets** : one-liners to download and pre-process any of the [![number of datasets](https://camo.githubusercontent.com/f72d44747c1f113f645de3943872ae3f58dc604b216d6a6e75c62cd4435c3456/68747470733a2f2f696d672e736869656c64732e696f2f656e64706f696e743f75726c3d68747470733a2f2f68756767696e67666163652e636f2f6170692f736869656c64732f646174617365747326636f6c6f723d627269676874677265656e)](https://camo.githubusercontent.com/f72d44747c1f113f645de3943872ae3f58dc604b216d6a6e75c62cd4435c3456/68747470733a2f2f696d672e736869656c64732e696f2f656e64706f696e743f75726c3d68747470733a2f2f68756767696e67666163652e636f2f6170692f736869656c64732f646174617365747326636f6c6f723d627269676874677265656e) major public datasets (image datasets, audio datasets, text datasets in 467 languages and dialects, etc.) provided on the [HuggingFace Datasets Hub](https://huggingface.co/datasets). With a simple command like `squad_dataset = load_dataset("squad")`, get any of these datasets ready to use in a dataloader for training/evaluating a ML model (Numpy/Pandas/PyTorch/TensorFlow/JAX),
 * **efficient data pre-processing** : simple, fast and reproducible data pre-processing for the public datasets as well as your own local datasets in CSV, JSON, text, PNG, JPEG, WAV, MP3, Parquet, etc. With simple commands like `processed_dataset = dataset.map(process_example)`, efficiently prepare the dataset for inspection and ML model evaluation and training.
 
-### Search Index : Hugging Face + FAISS, Weaviate or Haystack
-
-* For the Hugging Face + FAISS link, consider adding a brief explanation:
-  *“This integration allows efficient similarity search using dense vector representations, a critical component for document retrieval in RAG.”*
-* These tools are popular in the RAG space, and their inclusion would enrich the list. For example:
-  *“Weaviate: An open-source vector database for semantic search, perfect for RAG applications.”*
-  OR
-  *“Haystack: A powerful framework for building search systems integrated with LLMs.”*
+### Search Index : Hugging Face + Chroma, BM25
