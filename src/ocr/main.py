@@ -6,8 +6,8 @@ from glob import glob
 from tqdm import tqdm
 
 from .config.ocr_config import OCRConfig, PreprocessingConfig
-from .core.ocr_base_engine import OCREngine
 from .config.ocr_enum import OutputFormat
+from .core.ocr_base_engine import OCREngine
 
 
 def process_document(file_path: str, output_format: OutputFormat, output_folder: str):

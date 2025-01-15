@@ -29,6 +29,7 @@ def sanitize_metadata(metadata: dict):
             )
     return sanitized
 
+
 def get_collection_name():
     return os.getenv("HF_MODEL").split(":")[0].split("/")[-1].replace("-v1", "")
 

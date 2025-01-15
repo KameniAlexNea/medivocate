@@ -1,11 +1,11 @@
 import os
 from enum import Enum
 
+import torch
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
-import torch
 
 class LLMModel(Enum):
     OLLAMA = ChatOllama

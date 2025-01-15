@@ -8,8 +8,8 @@ from typing import Dict, List, Optional, Union
 import easyocr
 
 from ..config.ocr_config import OCRConfig
-from ..core.image_handler import ImageHandler
 from ..config.ocr_enum import OutputFormat
+from ..core.image_handler import ImageHandler
 from .pdf_base_handler import PDFHandler
 
 logger = logging.getLogger(__name__)
