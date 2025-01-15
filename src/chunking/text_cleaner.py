@@ -13,7 +13,7 @@ def clean_text(text):
     return cleaned_text
 
 
-def process_text_files(folder_path):
+def process_text_files(folder_path: str):
     for subdir, _, files in os.walk(folder_path):
         for file in tqdm(files):
             if file.endswith(".txt"):

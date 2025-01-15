@@ -29,6 +29,9 @@ def sanitize_metadata(metadata):
             )
     return sanitized
 
+def get_collection_name():
+    return os.getenv("HF_MODEL").split(":")[0].split("/")[-1].replace("-v1", "")
+
 
 class VectorStoreManager:
     def __init__(self, docs_dir: str, persist_directory_dir: str, batch_size=64):
@@ -42,7 +45,7 @@ class VectorStoreManager:
         self.docs_dir = docs_dir
         self.persist_directory_dir = persist_directory_dir
         self.batch_size = batch_size
-        self.collection_name = os.getenv("OLLAM_EMB").split(":")[0]
+        self.collection_name = get_collection_name()
 
     def _batch_process_documents(self, documents: List):
         """Process documents in batches"""

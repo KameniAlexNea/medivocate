@@ -9,11 +9,6 @@ from sentence_transformers import SentenceTransformer
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
 from .processor import Processor
 
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
 
 class ChunkingManager:
     def __init__(
