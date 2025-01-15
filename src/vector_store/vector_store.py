@@ -15,7 +15,7 @@ from tqdm import tqdm
 from ..utilities.llm_models import get_llm_model_embedding
 
 
-def sanitize_metadata(metadata):
+def sanitize_metadata(metadata: dict):
     sanitized = {}
     for key, value in metadata.items():
         if isinstance(value, list):

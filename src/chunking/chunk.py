@@ -7,7 +7,7 @@ from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
-from .processor import Processor
+from ..preprocessing.processor import Processor
 
 
 class ChunkingManager:
