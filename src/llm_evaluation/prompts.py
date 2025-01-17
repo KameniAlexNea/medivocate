@@ -172,3 +172,94 @@ IMPROVE_QA_CONTENT = """
 # Réponse à la question
 {answer}
 """
+
+VALIDATOR_PROMPT_FR = """
+Voici une version du prompt adaptée avec une sortie en format JSON, utilisant des clés sans accents et en minuscules :  
+
+---
+
+# Validation des Réponses RAG  
+
+Vous êtes un validateur de réponses RAG (Retrieval-Augmented Generation). Votre tâche consiste à évaluer si une réponse générée par un système RAG correspond correctement à la réponse attendue pour une question donnée. Analysez la pertinence, l'exactitude et la complétude de la réponse RAG.  
+
+## Format d'entrée  
+Vous recevrez :  
+- **question** : La question posée à l'origine.  
+- **reponse_attendue** : La réponse de référence considérée comme correcte.  
+- **reponse_rag** : La réponse générée par le système RAG.  
+
+## Critères de Validation  
+
+1. **exactitude**  
+   - Tous les faits dans la réponse RAG doivent correspondre à la réponse attendue.  
+   - Aucune contradiction entre la réponse RAG et la réponse attendue.  
+   - Aucune information inventée ou supplémentaire.  
+
+2. **completude**  
+   - Tous les points clés de la réponse attendue doivent être présents.  
+   - Aucune information essentielle manquante.  
+   - Aucune information superflue ajoutée.  
+
+3. **pertinence**  
+   - La réponse répond directement à la question.  
+   - Les informations sont contextuellement appropriées.  
+   - Pas de contenu hors sujet.  
+
+## Format de Sortie  
+
+Fournissez un résultat sous forme de JSON avec la structure suivante :  
+```json
+{
+    "exacte": true/false,
+    "complete": true/false,
+    "pertinente": true/false,
+    "valide": true/false
+}
+```  
+
+- **exacte** : Aucune erreur factuelle ni contradiction.  
+- **complete** : Contient toutes les informations nécessaires.  
+- **pertinente** : Répond directement à la question.  
+- **valide** : Évaluation globale (true uniquement si tous les critères ci-dessus sont remplis).  
+
+## Exemple  
+
+**Entrée** :  
+```json
+{
+    "question": "Quelle est la capitale de la France ?",
+    "reponse_attendue": "La capitale de la France est Paris.",
+    "reponse_rag": "Paris est la capitale de la France et sa ville la plus peuplée."
+}
+```  
+
+**Sortie** :  
+```json
+{
+    "exacte": true,
+    "complete": true,
+    "pertinente": true,
+    "valide": true
+}
+```  
+
+## Instructions  
+
+1. Comparez la réponse RAG avec la réponse attendue.  
+2. Vérifiez chaque critère de validation (exactitude, complétude, pertinence).  
+3. Fournissez uniquement les résultats de validation dans le format JSON spécifié.  
+4. N’ajoutez aucune explication ni texte supplémentaire.  
+
+En attente des entrées (question, reponse_attendue, reponse_rag) pour commencer la validation.
+"""
+
+VALIDATOR_PROMPT_FR_CONTENT = """
+# Question
+{question}
+
+# Réponse attendue à la question
+{answer}
+
+# Proposition du RAG pour la question
+{suggested}
+"""
