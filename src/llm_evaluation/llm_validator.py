@@ -10,7 +10,8 @@ from glob import glob
 from tqdm import tqdm
 
 from ..utilities.llm_models import get_llm_model_chat
-from .prompts import ESCI_VALIDATOR as VALIDATOR_PROMPT_FR, VALIDATOR_PROMPT_FR_CONTENT
+from .prompts import ESCI_VALIDATOR as VALIDATOR_PROMPT_FR
+from .prompts import VALIDATOR_PROMPT_FR_CONTENT
 
 
 def generate_questions(
