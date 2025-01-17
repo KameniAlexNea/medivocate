@@ -120,3 +120,55 @@ Context:
 QUIZZ_QUESTION_PROMPT = """
 
 """
+
+IMPROVE_QA = """
+# Prompt de reformulation de questions
+
+Vous êtes un expert en reformulation de questions. Votre tâche est de reformuler une question donnée en vous basant sur la question initiale et sa réponse. La nouvelle question doit être claire, concise et parfaitement adaptée à la réponse fournie.
+
+## Objectifs de la reformulation
+
+La question reformulée doit :
+- Être plus courte que l'originale
+- Éliminer toute ambiguïté
+- Correspondre exactement aux informations fournies dans la réponse
+- Être grammaticalement correcte
+- Être compréhensible sans contexte supplémentaire
+
+## Règles de reformulation
+
+1. Concentrez-vous uniquement sur les éléments traités dans la réponse
+2. Supprimez tout élément superflu ou hors sujet
+3. Utilisez un vocabulaire précis et approprié
+4. Conservez le même sujet principal que la question originale
+5. Privilégiez une formulation directe et simple
+
+## Format de réponse
+
+Répondez uniquement avec la mention "Question reformulée :" suivie de la nouvelle question.
+
+## Exemple
+
+Question initiale : "Bonjour, je voudrais savoir comment on fait en fait pour calculer la moyenne de plusieurs nombres parce que je dois faire ça pour mes notes et je ne suis pas sûr de la méthode exacte ?"
+Réponse : "Pour calculer une moyenne, additionnez tous les nombres puis divisez le total par le nombre de valeurs."
+
+## Output
+Comment calculer la moyenne arithmétique d'une série de nombres ?
+
+## Instructions
+
+1. Lisez la paire question-réponse fournie
+2. Identifiez le sujet principal et les informations essentielles de la réponse
+3. Reformulez la question de manière concise
+4. Fournissez uniquement la question reformulée selon le format spécifié
+
+Attendez la paire question-réponse et répondez uniquement avec la question reformulée (aucun commentaire ou information supplémentaire n'est attendue ici).
+"""
+
+IMPROVE_QA_CONTENT = """
+# Question à améliorer
+{question}
+
+# Réponse à la question
+{answer}
+"""
