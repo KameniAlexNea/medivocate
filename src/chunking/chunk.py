@@ -6,20 +6,15 @@ from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 
+from ..preprocessing.processor import Processor
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
-from .processor import Processor
-
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 
 
 class ChunkingManager:
     def __init__(
         self,
         llm: ChatOllama,
-        chunk_size=1000,
+        chunk_size=4000,
         chunk_overlap=200,
         top_n=3,
         keyphrase_ngram_range=(1, 1),
@@ -166,7 +161,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--chunk_size",
         type=int,
-        default=1000,
+        default=4000,
         help="Path to the folder containing input text files.",
     )
     parser.add_argument(

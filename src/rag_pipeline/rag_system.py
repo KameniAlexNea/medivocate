@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.conversational_retrieval.base import (
-    ConversationalRetrievalChain,
+    BaseConversationalRetrievalChain,
 )
 from langchain.chains.history_aware_retriever import (
     create_history_aware_retriever,
@@ -26,7 +26,7 @@ class RAGSystem:
     ):
         self.top_k_documents = top_k_documents
         self.llm = self._get_llm()
-        self.chain: Optional[ConversationalRetrievalChain] = None
+        self.chain: Optional[BaseConversationalRetrievalChain] = None
         self.vector_store_management = VectorStoreManager(
             docs_dir, persist_directory_dir, batch_size
         )
