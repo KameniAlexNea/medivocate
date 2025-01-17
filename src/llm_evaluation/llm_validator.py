@@ -3,12 +3,9 @@ python -m src.llm_evaluation.llm_validator --prediction_folder data/llm_eval_pre
 """
 
 import argparse
-import os
 import json
-from glob import glob
-
 import os
-import re
+from glob import glob
 
 from tqdm import tqdm
 
@@ -16,7 +13,11 @@ from ..utilities.llm_models import get_llm_model_chat
 from .prompts import VALIDATOR_PROMPT_FR, VALIDATOR_PROMPT_FR_CONTENT
 
 
-def generate_questions(prediction_folder: str, query_folder: str, output_folder: str,):
+def generate_questions(
+    prediction_folder: str,
+    query_folder: str,
+    output_folder: str,
+):
     """
     Generate questions using an LLM based on text files in a folder and save the results in a specified folder.
 
@@ -37,19 +38,21 @@ def generate_questions(prediction_folder: str, query_folder: str, output_folder:
             print("Ignore file due to empty prediction", file)
             continue
         name = os.path.basename(file).replace(".txt", ".json")
-        raw: dict[str] = json.load(open(os.path.join(
-            query_folder, name
-        )))
+        raw: dict[str] = json.load(open(os.path.join(query_folder, name)))
 
         # Generate the text using the LLM
-        text = llm.invoke([("system", VALIDATOR_PROMPT_FR), ("user", VALIDATOR_PROMPT_FR_CONTENT.format(
-            question=raw["question"], answer=raw["answer"], suggested=preds
-        ))])
-        result = {
-            "evaluation": text.content.strip(),
-            **raw,
-            "suggested": preds
-        }
+        text = llm.invoke(
+            [
+                ("system", VALIDATOR_PROMPT_FR),
+                (
+                    "user",
+                    VALIDATOR_PROMPT_FR_CONTENT.format(
+                        question=raw["question"], answer=raw["answer"], suggested=preds
+                    ),
+                ),
+            ]
+        )
+        result = {"evaluation": text.content.strip(), **raw, "suggested": preds}
 
         output_filename = name
         output_path = os.path.join(output_folder, output_filename)

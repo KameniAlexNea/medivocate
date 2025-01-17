@@ -3,10 +3,10 @@ python -m src.llm_evaluation.create_evaluation_data --input_folder data/chunks -
 """
 
 import argparse
+import json
 import os
 import random
 import uuid
-import json
 from glob import glob
 
 from tqdm import tqdm
@@ -14,13 +14,16 @@ from tqdm import tqdm
 from ..utilities.llm_models import get_llm_model_chat
 from .prompts import OPEN_QUESTION_PROMPT
 
+
 def load_data(path: str) -> str:
     if path.endswith(".txt"):
         return open(path).read()
     return json.load(open(path))["kwargs"]["page_content"]
 
 
-def generate_questions(input_folder: str, n_files: int, output_folder: str, file_type = "json"):
+def generate_questions(
+    input_folder: str, n_files: int, output_folder: str, file_type="json"
+):
     """
     Generate questions using an LLM based on text files in a folder and save the results in a specified folder.
 
@@ -32,8 +35,8 @@ def generate_questions(input_folder: str, n_files: int, output_folder: str, file
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    files = glob(os.path.join(input_folder, "*."+file_type)) + glob(
-        os.path.join(input_folder, "*/*."+file_type)
+    files = glob(os.path.join(input_folder, "*." + file_type)) + glob(
+        os.path.join(input_folder, "*/*." + file_type)
     )
     print(f"Found {len(files)} files in {input_folder}.")
 
@@ -77,11 +80,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--file_type",
-        default='json', # json ou txt
+        default="json",  # json ou txt
         type=str,
         help="Type of file to consider",
     )
 
     args = parser.parse_args()
 
-    generate_questions(args.input_folder, args.n_files, args.output_folder, args.file_type)
+    generate_questions(
+        args.input_folder, args.n_files, args.output_folder, args.file_type
+    )

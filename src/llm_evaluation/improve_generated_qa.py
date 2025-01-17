@@ -3,10 +3,11 @@ python -m src.llm_evaluation.improve_generated_qa --input_folder data/evaluation
 """
 
 import argparse
-import os
-import random
-import uuid
+import glob
 import json
+import os
+import re
+import uuid
 from glob import glob
 
 from tqdm import tqdm
@@ -14,9 +15,6 @@ from tqdm import tqdm
 from ..utilities.llm_models import get_llm_model_chat
 from .prompts import IMPROVE_QA, IMPROVE_QA_CONTENT
 
-import os
-import glob
-import re
 
 def parse_questions_answers_with_regex_file(file):
     question_pattern = re.compile(r"<question>(.*?)</question>", re.DOTALL)
@@ -26,7 +24,7 @@ def parse_questions_answers_with_regex_file(file):
     try:
         with open(file, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         # Find all questions and answers in the file
         questions = question_pattern.findall(content)
         answers = answer_pattern.findall(content)
@@ -38,6 +36,7 @@ def parse_questions_answers_with_regex_file(file):
     except Exception as e:
         print(f"Error processing file {file}: {e}")
     return qa_list
+
 
 def parse_questions_answers_with_regex(folder_path):
     """
@@ -59,7 +58,10 @@ def parse_questions_answers_with_regex(folder_path):
     return qa_list
 
 
-def generate_questions(input_folder: str, output_folder: str,):
+def generate_questions(
+    input_folder: str,
+    output_folder: str,
+):
     """
     Generate questions using an LLM based on text files in a folder and save the results in a specified folder.
 
@@ -79,13 +81,13 @@ def generate_questions(input_folder: str, output_folder: str,):
         for qa, answ in tqdm(questions):
 
             # Generate the text using the LLM
-            text = llm.invoke([("system", IMPROVE_QA), ("user", IMPROVE_QA_CONTENT.format(
-                question=qa, answer=answ
-            ))])
-            result = {
-                "question": text.content.strip(),
-                "answer": answ
-            }
+            text = llm.invoke(
+                [
+                    ("system", IMPROVE_QA),
+                    ("user", IMPROVE_QA_CONTENT.format(question=qa, answer=answ)),
+                ]
+            )
+            result = {"question": text.content.strip(), "answer": answ}
 
             # Generate a unique filename for the output
             output_filename = f"{uuid.uuid4().hex}.json"
