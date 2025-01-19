@@ -1,33 +1,38 @@
-from typing import Dict, List
+import os
+from typing import List
 
 import gradio as gr
 
 from ..rag_pipeline.rag_system import RAGSystem
 
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
 
 class ChatInterface:
     def __init__(self, rag_system: RAGSystem):
         self.rag_system = rag_system
-        self.chat_history: List[Dict] = []
 
     def respond(self, message: str, history: List[List[str]]):
         result = ""
-        for text in self.rag_system.query_iter(message, history):
+        history = [(turn["role"], turn["content"]) for turn in history]
+        for text in self.rag_system.query(message, history):
             result += text
             yield result
         return result
 
-    def create_interface(self):
-        chat_interface = gr.ChatInterface(
-            fn=self.respond,
-            title="Medivocate",
-            description="Medivocate is an AI-driven platform leveraging Retrieval-Augmented Generation (RAG) powered by African history. It processes and classifies document pages with precision to provide trustworthy, personalized guidance, fostering accurate knowledge and equitable access to historical insights.",
-            retry_btn=None,
-            undo_btn=None,
-            clear_btn="Clear",
-            # chatbot=gr.Chatbot(show_copy_button=True),
+    def create_interface(self) -> gr.ChatInterface:
+        description = (
+            "Medivocate is an application that offers clear and structured information "
+            "about African history and traditional medicine. The knowledge is exclusively "
+            "based on historical documentaries about the African continent.\n\n"
+            "🌟 **Code Repository**: [Medivocate GitHub](https://github.com/KameniAlexNea/medivocate)"
         )
-        return chat_interface
+        return gr.ChatInterface(
+            fn=self.respond,
+            type="messages",
+            title="Medivocate",
+            description=description,
+        )
 
     def launch(self, share=False):
         interface = self.create_interface()

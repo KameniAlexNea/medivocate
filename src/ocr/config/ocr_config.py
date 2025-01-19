@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from ..enums.ocr_enum import OutputFormat
+from .ocr_enum import OutputFormat
 
 
 @dataclass()

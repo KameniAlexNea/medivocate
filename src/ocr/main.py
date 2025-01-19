@@ -6,16 +6,8 @@ from glob import glob
 from tqdm import tqdm
 
 from .config.ocr_config import OCRConfig, PreprocessingConfig
+from .config.ocr_enum import OutputFormat
 from .core.ocr_base_engine import OCREngine
-from .enums.ocr_enum import OutputFormat
-
-
-def setup_logging():
-    """Configure logging for the application."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
 
 
 def process_document(file_path: str, output_format: OutputFormat, output_folder: str):
@@ -32,8 +24,6 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
         logging.info(f"Skipping {file_path} as it is already processed")
         return
     logging.info(f"Processing {file_path}")
-    # Setup logging
-    setup_logging()
 
     # Initialize configuration
     config = OCRConfig(
