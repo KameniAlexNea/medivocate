@@ -1,6 +1,7 @@
-import os
-from typing import List, Any
 import logging
+import os
+from typing import Any, List
+
 import torch
 from langchain_core.embeddings import Embeddings
 from langchain_huggingface import (
@@ -11,7 +12,9 @@ from pydantic import BaseModel, Field
 
 
 class CustomEmbedding(BaseModel, Embeddings):
-    hosted_embedding: HuggingFaceEndpointEmbeddings = Field(default_factory=lambda: None)
+    hosted_embedding: HuggingFaceEndpointEmbeddings = Field(
+        default_factory=lambda: None
+    )
     cpu_embedding: HuggingFaceEmbeddings = Field(default_factory=lambda: None)
 
     def __init__(self, **kwargs: Any):

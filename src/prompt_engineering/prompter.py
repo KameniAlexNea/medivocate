@@ -2,7 +2,7 @@ from langchain.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
 
 TEMPLATE = """
-J'ai un prompt généré par un utilisateur destiné à récupérer des informations à partir d'un système de génération augmentée par la récupération (RAG), où des segments de documents sont stockés sous forme d'embeddings pour une recherche efficace et précise. Votre tâche consiste à affiner ce prompt afin de :
+J'ai un prompt posé par un utilisateur destiné à récupérer des informations à partir d'un système de génération augmentée par la récupération (RAG), où des segments de documents sont stockés sous forme d'embeddings pour une recherche efficace et précise. Votre tâche consiste à affiner ce prompt afin de :
 
 1. Améliorer la pertinence de la recherche en alignant la requête avec la granularité sémantique et l'intention des embeddings.
 2. Minimiser l'ambiguïté pour réduire le risque de récupérer des segments non pertinents ou trop génériques.
