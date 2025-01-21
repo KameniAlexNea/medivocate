@@ -31,16 +31,6 @@ class CustomEmbedding(BaseModel, Embeddings):
         )
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """
-        Embed a list of documents using the hosted embedding. If the API request limit is reached,
-        fall back to using the CPU embedding.
-
-        Args:
-            texts (List[str]): List of documents to embed.
-
-        Returns:
-            List[List[float]]: List of embeddings for each document.
-        """
         try:
             return self.hosted_embedding.embed_documents(texts)
         except:
@@ -48,16 +38,6 @@ class CustomEmbedding(BaseModel, Embeddings):
             return self.cpu_embedding.embed_documents(texts)
 
     def embed_query(self, text: str) -> List[float]:
-        """
-        Embed a single query using the hosted embedding. If the API request limit is reached,
-        fall back to using the CPU embedding.
-
-        Args:
-            text (str): Query to embed.
-
-        Returns:
-            List[float]: Embedding for the query.
-        """
         try:
             return self.hosted_embedding.embed_query(text)
         except:
