@@ -22,7 +22,7 @@ def process_text_files(folder_path: str):
                     text = f.read()
 
                 if not Processor.is_valid_file(text):
-                    os.remove(file_path) # delete the file if it's a title
+                    os.remove(file_path)  # delete the file if it's a title
                     continue
 
                 cleaned_text = clean_text(text)

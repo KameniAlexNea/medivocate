@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Optional
 
 from .ocr_enum import OutputFormat
@@ -28,8 +27,8 @@ class OCRConfig:
         output_format: Desired output format
     """
 
-    dpi: int # = 300
-    languages: list[str] # = field(default_factory=lambda x: ["eng"])
-    batch_size: int # = 10
-    preprocessing: PreprocessingConfig # = PreprocessingConfig()
+    dpi: int  # = 300
+    languages: list[str]  # = field(default_factory=lambda x: ["eng"])
+    batch_size: int  # = 10
+    preprocessing: PreprocessingConfig  # = PreprocessingConfig()
     output_format: OutputFormat = OutputFormat.TEXT

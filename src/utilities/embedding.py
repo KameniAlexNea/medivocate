@@ -19,25 +19,45 @@ class CustomEmbedding(BaseModel, Embeddings):
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
+        query_instruction = (
+            "Represent this sentence for searching relevant passages:"
+            if (os.getenv("IS_APP", "0") == "1")
+            else ""
+        )
         if torch.cuda.is_available():
             logging.info("CUDA is available")
             self.hosted_embedding = HuggingFaceEmbeddings(
                 model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
-                model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
-                encode_kwargs={"normalize_embeddings": True},
+                model_kwargs={
+                    "device": "cpu" if not torch.cuda.is_available() else "cuda"
+                },
+                encode_kwargs={
+                    "normalize_embeddings": True,
+                    "prompt": query_instruction,
+                },
             )
             self.cpu_embedding = self.hosted_embedding
         else:
             logging.info("CUDA is not available")
             self.hosted_embedding = HuggingFaceEndpointEmbeddings(
                 model=os.getenv("HF_MODEL"),
-                model_kwargs={"encode_kwargs": {"normalize_embeddings": True}},
+                model_kwargs={
+                    "encode_kwargs": {
+                        "normalize_embeddings": True,
+                        "prompt": query_instruction,
+                    }
+                },
                 huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
             )
             self.cpu_embedding = HuggingFaceEmbeddings(
                 model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
-                model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
-                encode_kwargs={"normalize_embeddings": True},
+                model_kwargs={
+                    "device": "cpu" if not torch.cuda.is_available() else "cuda"
+                },
+                encode_kwargs={
+                    "normalize_embeddings": True,
+                    "prompt": query_instruction,
+                },
             )
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:

@@ -6,6 +6,7 @@ from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from tqdm import tqdm
+from transformers import AutoTokenizer
 
 from ..utilities.llm_models import get_llm_model_embedding
 from .document_loader import DocumentLoader
@@ -41,6 +42,9 @@ class VectorStoreManager:
             "chroma": None,
             "bm25": None,
         }
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            os.getenv("HF_MODEL", "meta-llama/Llama-3.2-1B")
+        )
         self.vs_initialized = False
         self.vector_store = None
 
@@ -62,7 +66,9 @@ class VectorStoreManager:
             else:
                 self.vector_stores["chroma"].add_documents(batch)
 
-        self.vector_stores["bm25"] = BM25Retriever.from_documents(documents)
+        self.vector_stores["bm25"] = BM25Retriever.from_documents(
+            documents, tokenizer=self.tokenizer
+        )
 
     def initialize_vector_store(self, documents: List[Document] = None):
         """Initializes or loads the vector store."""
@@ -85,7 +91,7 @@ class VectorStoreManager:
         self.vs_initialized = True
 
     def create_retriever(
-        self, n_documents: int, bm25_portion: float = 0.04
+        self, n_documents: int, bm25_portion: float = 0.3
     ) -> EnsembleRetriever:
         """Creates an ensemble retriever combining Chroma and BM25."""
         self.vector_stores["bm25"].k = n_documents

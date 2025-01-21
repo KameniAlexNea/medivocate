@@ -1,17 +1,17 @@
+import json
 import logging
 import os
-import json
-from typing import Union
-from uuid import uuid4
 from concurrent.futures import ThreadPoolExecutor
 from glob import glob
+from typing import Union
+from uuid import uuid4
 
+from dotenv import load_dotenv
 from keybert import KeyBERT
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
-from dotenv import load_dotenv
 
 from ..preprocessing.processor import Processor
 from ..utilities.llm_models import get_llm_model_chat
@@ -57,7 +57,7 @@ class ChunkingManager:
         )
         if isinstance(keywords[0], tuple):
             keywords = [keywords]
-        keywords_list = [[kw[0] for kw in para_kw] for para_kw in keywords ]
+        keywords_list = [[kw[0] for kw in para_kw] for para_kw in keywords]
         return keywords_list
 
     def split_text_into_large_chunks(self, text, target_word_count=500):
