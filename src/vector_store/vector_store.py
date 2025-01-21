@@ -92,7 +92,7 @@ class VectorStoreManager:
             self.vector_stores["bm25"] = bm25_vs
         self.vs_initialized = True
 
-    def create_retriever(self, n_documents: int, bm25_portion: float = 0.4):
+    def create_retriever(self, n_documents: int, bm25_portion: float = 0.04):
         self.vector_stores["bm25"].k = n_documents
         self.vector_store = EnsembleRetriever(
             retrievers=[
