@@ -1,7 +1,6 @@
 import argparse
 import os
 from glob import glob
-
 from ..rag_pipeline.rag_system import RAGSystem
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ class RAGSystem:
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
-        return self.vector_store_management.load_documents()
+        return self.vector_store_management.load_and_process_documents()
 
     def initialize_vector_store(self, documents: List = None):
         """Initialize or load the vector store"""

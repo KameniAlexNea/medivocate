@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     os.makedirs(args.save_folder, exist_ok=True)
 
-    files = sorted(glob(os.path.join(args.input_folder, "*/*.txt")))[:5]
+    files = sorted(glob(os.path.join(args.input_folder, "*/*.txt")))
 
     def process_and_save(file_path):
         documents = chunking_manager.retrieve_documents_from_file(

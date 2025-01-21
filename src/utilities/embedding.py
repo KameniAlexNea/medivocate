@@ -19,16 +19,26 @@ class CustomEmbedding(BaseModel, Embeddings):
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
-        self.hosted_embedding = HuggingFaceEndpointEmbeddings(
-            model=os.getenv("HF_MODEL"),
-            model_kwargs={"encode_kwargs": {"normalize_embeddings": True}},
-            huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
-        )
-        self.cpu_embedding = HuggingFaceEmbeddings(
-            model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
-            model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
-            encode_kwargs={"normalize_embeddings": True},
-        )
+        if torch.cuda.is_available():
+            logging.info("CUDA is available")
+            self.hosted_embedding = HuggingFaceEmbeddings(
+                model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
+                model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
+                encode_kwargs={"normalize_embeddings": True},
+            )
+            self.cpu_embedding = self.hosted_embedding
+        else:
+            logging.info("CUDA is not available")
+            self.hosted_embedding = HuggingFaceEndpointEmbeddings(
+                model=os.getenv("HF_MODEL"),
+                model_kwargs={"encode_kwargs": {"normalize_embeddings": True}},
+                huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+            )
+            self.cpu_embedding = HuggingFaceEmbeddings(
+                model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
+                model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
+                encode_kwargs={"normalize_embeddings": True},
+            )
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         try:
