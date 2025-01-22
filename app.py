@@ -11,7 +11,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 class ChatInterface:
     def __init__(self, rag_system: RAGSystem):
         self.rag_system = rag_system
-        self.history_depth = int(os.getenv("MAX_MESSAGES")) * 2
+        self.history_depth = int(os.getenv("MAX_MESSAGES") or 5) * 2
 
     def respond(self, message: str, history: List[List[str]]):
         result = ""
@@ -38,7 +38,8 @@ class ChatInterface:
 
 # Usage example:
 if __name__ == "__main__":
-    rag_system = RAGSystem(top_k_documents=12)
+    top_k_docs = int(os.getenv("N_CONTEXT") or 4)
+    rag_system = RAGSystem(top_k_documents=top_k_docs)
     rag_system.initialize_vector_store()
 
     chat_interface = ChatInterface(rag_system)

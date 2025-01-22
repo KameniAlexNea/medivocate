@@ -21,6 +21,10 @@ def process_text_files(folder_path: str):
                 with open(file_path, "r", encoding="utf-8") as f:
                     text = f.read()
 
+                if not Processor.is_valid_file(text):
+                    os.remove(file_path)  # delete the file if it's a title
+                    continue
+
                 cleaned_text = clean_text(text)
 
                 with open(file_path, "w", encoding="utf-8") as f:

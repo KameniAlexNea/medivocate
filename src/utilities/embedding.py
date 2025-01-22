@@ -19,28 +19,48 @@ class CustomEmbedding(BaseModel, Embeddings):
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
-        self.hosted_embedding = HuggingFaceEndpointEmbeddings(
-            model=os.getenv("HF_MODEL"),
-            model_kwargs={"encode_kwargs": {"normalize_embeddings": True}},
-            huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+        query_instruction = (
+            "Represent this sentence for searching relevant passages:"
+            if (os.getenv("IS_APP", "0") == "1")
+            else ""
         )
-        self.cpu_embedding = HuggingFaceEmbeddings(
-            model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
-            model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
-            encode_kwargs={"normalize_embeddings": True},
-        )
+        if torch.cuda.is_available():
+            logging.info("CUDA is available")
+            self.hosted_embedding = HuggingFaceEmbeddings(
+                model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
+                model_kwargs={
+                    "device": "cpu" if not torch.cuda.is_available() else "cuda"
+                },
+                encode_kwargs={
+                    "normalize_embeddings": True,
+                    "prompt": query_instruction,
+                },
+            )
+            self.cpu_embedding = self.hosted_embedding
+        else:
+            logging.info("CUDA is not available")
+            self.hosted_embedding = HuggingFaceEndpointEmbeddings(
+                model=os.getenv("HF_MODEL"),
+                model_kwargs={
+                    "encode_kwargs": {
+                        "normalize_embeddings": True,
+                        "prompt": query_instruction,
+                    }
+                },
+                huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+            )
+            self.cpu_embedding = HuggingFaceEmbeddings(
+                model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
+                model_kwargs={
+                    "device": "cpu" if not torch.cuda.is_available() else "cuda"
+                },
+                encode_kwargs={
+                    "normalize_embeddings": True,
+                    "prompt": query_instruction,
+                },
+            )
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """
-        Embed a list of documents using the hosted embedding. If the API request limit is reached,
-        fall back to using the CPU embedding.
-
-        Args:
-            texts (List[str]): List of documents to embed.
-
-        Returns:
-            List[List[float]]: List of embeddings for each document.
-        """
         try:
             return self.hosted_embedding.embed_documents(texts)
         except:
@@ -48,16 +68,6 @@ class CustomEmbedding(BaseModel, Embeddings):
             return self.cpu_embedding.embed_documents(texts)
 
     def embed_query(self, text: str) -> List[float]:
-        """
-        Embed a single query using the hosted embedding. If the API request limit is reached,
-        fall back to using the CPU embedding.
-
-        Args:
-            text (str): Query to embed.
-
-        Returns:
-            List[float]: Embedding for the query.
-        """
         try:
             return self.hosted_embedding.embed_query(text)
         except:

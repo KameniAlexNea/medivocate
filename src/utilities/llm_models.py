@@ -18,7 +18,6 @@ def get_llm_model_chat(temperature=0.01, max_tokens=None):
             model=os.getenv("OLLAMA_MODEL"),
             temperature=temperature,
             max_tokens=max_tokens,
-            # other params...
             base_url=os.getenv("OLLAMA_HOST"),
             client_kwargs={
                 "headers": {

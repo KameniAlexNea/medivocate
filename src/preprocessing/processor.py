@@ -58,7 +58,7 @@ class Processor:
     @staticmethod
     def is_valid_file(raw: str):
         lines = [i for i in raw.split("\n") if i.strip()]
-        count = [i for i in lines if ".............." in i]  # potential title
+        count = [i for i in lines if "........" in i]  # potential title
         count2 = [i for i in lines if "—." in i]  # potential citation
         count3 = [
             1 for i in lines if Processor.is_potential_title(i)
