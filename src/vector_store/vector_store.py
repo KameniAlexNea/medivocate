@@ -80,18 +80,18 @@ class VectorStoreManager:
                 persist_directory=self.persist_directory,
                 embedding_function=self.embeddings,
             )
-            all_documents = self.vector_stores["chroma"].get(include=["documents"])
+            all_documents = self.vector_stores["chroma"].get(include=["documents", "metadatas"])
             documents = [
-                Document(page_content=content, id=doc_id)
-                for content, doc_id in zip(
-                    all_documents["documents"], all_documents["ids"]
+                Document(page_content=content, id=doc_id, metadata=metadata)
+                for content, doc_id, metadata in zip(
+                    all_documents["documents"], all_documents["ids"], all_documents["metadatas"]
                 )
             ]
             self.vector_stores["bm25"] = BM25Retriever.from_documents(documents)
         self.vs_initialized = True
 
     def create_retriever(
-        self, n_documents: int, bm25_portion: float = 0.3
+        self, n_documents: int, bm25_portion: float = 0.8
     ) -> EnsembleRetriever:
         """Creates an ensemble retriever combining Chroma and BM25."""
         self.vector_stores["bm25"].k = n_documents

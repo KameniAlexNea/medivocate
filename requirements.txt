@@ -16,4 +16,5 @@ keybert==0.8.5
 gradio==5.9.1
 rank_bm25==0.2.2
 groq==0.15.0
-gdown
+gdown==5.2.0
+retriv==0.2.3
