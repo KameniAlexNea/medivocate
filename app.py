@@ -3,7 +3,8 @@ from typing import List
 
 import gradio as gr
 
-from ..rag_pipeline.rag_system import RAGSystem
+from src.rag_pipeline.rag_system import RAGSystem
+from load_data import download_and_prepare_data
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
@@ -11,10 +12,11 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 class ChatInterface:
     def __init__(self, rag_system: RAGSystem):
         self.rag_system = rag_system
+        self.history_depth = int(os.getenv("MAX_MESSAGES") or 5) * 2
 
     def respond(self, message: str, history: List[List[str]]):
         result = ""
-        history = [(turn["role"], turn["content"]) for turn in history]
+        history = [(turn["role"], turn["content"]) for turn in history[-self.history_depth:]]
         for text in self.rag_system.query(message, history):
             result += text
             yield result
@@ -34,15 +36,20 @@ class ChatInterface:
             description=description,
         )
 
-    def launch(self, share=False):
-        interface = self.create_interface()
-        interface.launch(share=share)
-
 
 # Usage example:
 if __name__ == "__main__":
-    rag_system = RAGSystem(top_k_documents=12)
+    # Example usage
+    zip_filename = "chroma_db.zip"
+    extract_to = "chroma_db"
+    target_folder = "data/chroma_db"
+    gdrive_url = os.getenv("GDRIVE_URL")
+    download_and_prepare_data(gdrive_url, zip_filename, extract_to, target_folder)
+
+    top_k_docs = int(os.getenv("N_CONTEXT") or 4)
+    rag_system = RAGSystem(top_k_documents=top_k_docs)
     rag_system.initialize_vector_store()
 
     chat_interface = ChatInterface(rag_system)
-    chat_interface.launch(share=False)
+    demo = chat_interface.create_interface()
+    demo.launch(share=False)

@@ -1,12 +1,20 @@
+import json
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor
+from glob import glob
+from typing import Union
 from uuid import uuid4
 
+from dotenv import load_dotenv
 from keybert import KeyBERT
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 
 from ..preprocessing.processor import Processor
+from ..utilities.llm_models import get_llm_model_chat
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
 
 
@@ -35,156 +43,116 @@ class ChunkingManager:
     def clean_text(self, text):
         return self.clean_agent.process(text)
 
-    def generate_summaries(self, paragraphs: list[str]):
-        summaries = self.summary_agent.batch_process(paragraphs)
-        return summaries
+    def generate_summaries(self, paragraphs):
+        return self.summary_agent.batch_process(paragraphs)
 
-    def generate_keywords(self, paragraphs: list[str], use_llm=True):
+    def generate_keywords(self, paragraphs: Union[str, list[str]], use_llm=True):
         if use_llm:
             return self.keyword_agent.batch_process(paragraphs)
-        keywords_list: list[str] = []
-        for paragraph in paragraphs:
-            keywords = self.kwb.extract_keywords(
-                paragraph,
-                top_n=self.top_n,
-                keyphrase_ngram_range=self.keyphrase_ngram_range,
-            )
-            keywords = [kw[0] for kw in keywords]
-            keywords_list.append(keywords)
+
+        keywords = self.kwb.extract_keywords(
+            paragraphs,
+            top_n=self.top_n,
+            keyphrase_ngram_range=self.keyphrase_ngram_range,
+        )
+        if isinstance(keywords[0], tuple):
+            keywords = [keywords]
+        keywords_list = [[kw[0] for kw in para_kw] for para_kw in keywords]
         return keywords_list
 
-    def split_text_into_large_chunks(self, text: str, target_word_count=500):
-        """
-        on splitte le texte en chunks qui vont être résumés par la suite
-        """
+    def split_text_into_large_chunks(self, text, target_word_count=500):
         return self.processor.split_text_into_large_chunks(text, target_word_count)
 
     def retrieve_documents_from_file(
         self,
-        file_path: str,
+        file_path,
         use_llm_cleaning=False,
-        use_llm_for_keywords=False,  # no use of llm for keywords, KeyBert is used instead
-        summarize_before_chunk=False,  # no summarization before chunking
-        check_text_validity=True,  # check text validity using llm ? simple approach
-        llm_check_text_validity=False,  # check text validity using llm ? simple approach
+        use_llm_for_keywords=False,
+        summarize_before_chunk=False,
+        check_text_validity=True,
+        llm_check_text_validity=False,
         verbose=False,
         target_word_count=500,
     ):
-        with open(file_path, mode="r") as f:
-            text = f.read()
-
-        if verbose:
-            print(("*" * 38) + "\n")
-            print("Raw text:\n")
-            print(text)
-            print(("-" * 25) + "\n")
-
-        # text = self.processor.merge_sentences(text)
-
-        if use_llm_cleaning:
-            text = self.clean_text(text)
-
-        if check_text_validity:
-            checker = True
-            if llm_check_text_validity:
-                category = self.category_agent.process(text)
-                if verbose:
-                    print("---- Document Category -----")
-                    print(category)
-
-                checker = "contenu" not in category.lower()
-            if not self.processor.is_valid_file(text) and checker:
-                print(text)
-                print("The text is invalid, not retrieving documents from it.")
-                return []
-
-        if verbose:
-            print("Cleaned text:\n")
-            print(text)
-            print(("*" * 38) + "\n")
-
-        if summarize_before_chunk:
-            large_chunks = self.split_text_into_large_chunks(
-                text, target_word_count=target_word_count
-            )
-            summaries = self.generate_summaries(large_chunks)
+        try:
+            with open(file_path, mode="r", encoding="utf-8") as f:
+                text = f.read()
 
             if verbose:
-                print("****** Summary ******")
-                for chunk, summary in zip(large_chunks, summaries):
-                    print("\n---------------------------------------")
-                    print("Text: \n", chunk, "\n")
-                    print("Summary: \n", summary, "\n")
-                    print("---------------------------------------\n")
+                print(f"{'*' * 38}\nRaw text:\n{text}\n{'-' * 25}\n")
 
-            text = "\n".join(summaries)
+            if use_llm_cleaning:
+                text = self.clean_text(text)
 
-        chunks = self.processor.text_splitter.split_text(text)
-        keywords_list = self.generate_keywords(chunks, use_llm=use_llm_for_keywords)
+            if check_text_validity:
+                if llm_check_text_validity:
+                    category = self.category_agent.process(text)
+                    if verbose:
+                        print("---- Document Category -----")
+                        print(category)
 
-        if verbose:
-            print("****** Chunks and Keywords ******")
-            for chunk, keywords in zip(chunks, keywords_list):
-                print("\n---------------------------------------")
-                print("Chunk: \n", chunk)
-                print("Keywords: \n", keywords)
-                print("----------------------------------------\n")
+                    if (
+                        "contenu" not in category.lower()
+                        and not self.processor.is_valid_file(text)
+                    ):
+                        logging.warning(f"Invalid text in file: {file_path}")
+                        return []
 
-        documents: list[Document] = []
-        uuids = [str(uuid4().hex) for _ in range(len(chunks))]
-        for id, chunk, keywords in zip(uuids, chunks, keywords_list):
-            documents.append(
+            if verbose:
+                print(f"Cleaned text:\n{text}\n{'*' * 38}\n")
+
+            if summarize_before_chunk:
+                large_chunks = self.split_text_into_large_chunks(
+                    text, target_word_count
+                )
+                summaries = self.generate_summaries(large_chunks)
+
+                if verbose:
+                    print("****** Summary ******")
+                    for chunk, summary in zip(large_chunks, summaries):
+                        print(f"\nText: \n{chunk}\n\nSummary: \n{summary}\n")
+
+                text = "\n".join(summaries)
+
+            chunks = self.processor.text_splitter.split_text(text)
+            keywords_list = self.generate_keywords(chunks, use_llm=use_llm_for_keywords)
+
+            if verbose:
+                print("****** Chunks and Keywords ******")
+                for chunk, keywords in zip(chunks, keywords_list):
+                    print(f"\nChunk: \n{chunk}\nKeywords: \n{keywords}\n")
+
+            documents = [
                 Document(
                     page_content=chunk,
                     metadata={"source": file_path, "keywords": keywords},
-                    id=id,
+                    id=str(uuid4().hex),
                 )
-            )
-        return documents
+                for chunk, keywords in zip(chunks, keywords_list)
+            ]
+            return documents
+
+        except Exception as e:
+            logging.error(f"Error processing file {file_path}: {e}")
+            return []
 
 
 if __name__ == "__main__":
     import argparse
-    import json
-    import os
-    from concurrent.futures import ThreadPoolExecutor
-    from glob import glob
-
-    from tqdm import tqdm
 
     parser = argparse.ArgumentParser(description="Generate questions from text files.")
+    parser.add_argument("--input_folder", type=str, help="Path to input text files.")
+    parser.add_argument("--chunk_size", type=int, default=4000, help="Chunk size.")
+    parser.add_argument("--chunk_overlap", type=int, default=200, help="Chunk overlap.")
     parser.add_argument(
-        "--input_folder",
-        type=str,
-        help="Path to the folder containing input text files.",
-    )
-    parser.add_argument(
-        "--chunk_size",
-        type=int,
-        default=4000,
-        help="Path to the folder containing input text files.",
-    )
-    parser.add_argument(
-        "--chunk_overlap",
-        type=int,
-        default=200,
-        help="Path to the folder containing input text files.",
-    )
-    parser.add_argument(
-        "--save_folder",
-        type=str,
-        help="Path to save extracted chunks",
+        "--save_folder", type=str, help="Path to save extracted chunks."
     )
     args = parser.parse_args()
-
-    from dotenv import load_dotenv
-
-    from ..utilities.llm_models import get_llm_model_chat
 
     load_dotenv()
 
     llm = get_llm_model_chat(temperature=0.1, max_tokens=256)
-    chunkingManager = ChunkingManager(
+    chunking_manager = ChunkingManager(
         chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap, llm=llm
     )
 
@@ -192,32 +160,24 @@ if __name__ == "__main__":
 
     files = sorted(glob(os.path.join(args.input_folder, "*/*.txt")))
 
-    def get_and_save_document_chunking(file_path):
-        try:
-            documents = chunkingManager.retrieve_documents_from_file(
-                file_path=file_path,
-                verbose=False,
-                use_llm_for_keywords=False,
-                summarize_before_chunk=False,
-                check_text_validity=False,
-                llm_check_text_validity=False,
-                target_word_count=500,
-            )
-            return documents, file_path
-        except Exception as e:
-            logging.error(f"Error processing file {file_path}: {e}")
-            return [], file_path
+    def process_and_save(file_path):
+        documents = chunking_manager.retrieve_documents_from_file(
+            file_path=file_path,
+            verbose=False,
+            use_llm_for_keywords=False,
+            summarize_before_chunk=False,
+            check_text_validity=False,
+            llm_check_text_validity=False,
+            target_word_count=500,
+        )
+
+        if not documents:
+            logging.warning(f"No documents extracted from {file_path}")
+        for doc in documents:
+            with open(
+                os.path.join(args.save_folder, f"{doc.id}.json"), "w", encoding="utf-8"
+            ) as f:
+                json.dump(doc.to_json(), f, indent=4, ensure_ascii=False)
 
     with ThreadPoolExecutor(max_workers=4) as executor:
-        for documents, file_path in tqdm(
-            executor.map(get_and_save_document_chunking, files), total=len(files)
-        ):
-            if not len(documents):
-                logging.warning(f"No documents extracted from {file_path}")
-            for doc in documents:
-                with open(
-                    os.path.join(args.save_folder, f"{doc.id}.json"),
-                    mode="w",
-                    encoding="utf-8",
-                ) as f:
-                    json.dump(doc.to_json(), f, indent=4)
+        list(tqdm(executor.map(process_and_save, files), total=len(files)))

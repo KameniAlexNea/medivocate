@@ -1,10 +1,10 @@
 import os
 from enum import Enum
 
-import torch
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
+
+from .embedding import CustomEmbedding
 
 
 class LLMModel(Enum):
@@ -18,7 +18,6 @@ def get_llm_model_chat(temperature=0.01, max_tokens=None):
             model=os.getenv("OLLAMA_MODEL"),
             temperature=temperature,
             max_tokens=max_tokens,
-            # other params...
             base_url=os.getenv("OLLAMA_HOST"),
             client_kwargs={
                 "headers": {
@@ -35,11 +34,7 @@ def get_llm_model_chat(temperature=0.01, max_tokens=None):
 
 def get_llm_model_embedding():
     if str(os.getenv("USE_HF_EMBEDDING")) == "1":
-        return HuggingFaceEmbeddings(
-            model_name=os.getenv("HF_MODEL"),  # You can replace with any HF model
-            model_kwargs={"device": "cpu" if not torch.cuda.is_available() else "cuda"},
-            encode_kwargs={"normalize_embeddings": True},
-        )
+        return CustomEmbedding()
     return OllamaEmbeddings(
         model=os.getenv("OLLAM_EMB"),
         base_url=os.getenv("OLLAMA_HOST"),
