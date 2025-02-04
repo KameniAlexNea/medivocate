@@ -30,7 +30,9 @@ class QueryDecomposer:
         sub_queries = self.decomposition_chain.invoke({"query": query}).content
 
         try:
-            sub_queries = json.loads(sub_queries)
+            index_left = sub_queries.index('[')
+            index_right = sub_queries.index(']')
+            sub_queries = json.loads(sub_queries[index_left: index_right+1])
             return sub_queries
         except json.JSONDecodeError:
             print("output format incorrect, query not divided")

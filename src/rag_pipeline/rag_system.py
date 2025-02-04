@@ -10,6 +10,8 @@ from langchain.chains.history_aware_retriever import (
     create_history_aware_retriever,
 )
 from langchain.chains.retrieval import create_retrieval_chain
+from src.prompt_engineering.prompt_combiner import PromptCombiner
+from src.prompt_engineering.query_decomposer import QueryDecomposer
 
 from ..utilities.llm_models import get_llm_model_chat
 from ..vector_store.vector_store import VectorStoreManager
@@ -30,6 +32,8 @@ class RAGSystem:
         self.vector_store_management = VectorStoreManager(
             docs_dir, persist_directory_dir, batch_size
         )
+        self.decomposer = QueryDecomposer(self.llm)
+        self.combiner = PromptCombiner(self.llm)
 
     def _get_llm(
         self,
@@ -52,15 +56,46 @@ class RAGSystem:
         )
 
         # Contextualize question
-        history_aware_retriever = create_history_aware_retriever(
+        self.history_aware_retriever = create_history_aware_retriever(
             self.llm, retriever, CONTEXTUEL_QUERY_PROMPT
         )
-        question_answer_chain = create_stuff_documents_chain(self.llm, CHAT_PROMPT)
+        self.question_answer_chain = create_stuff_documents_chain(self.llm, CHAT_PROMPT)
         self.chain = create_retrieval_chain(
-            history_aware_retriever, question_answer_chain
+            self.history_aware_retriever, self.question_answer_chain
         )
         logging.info("RAG chain setup complete" + str(self.chain))
+        
         return self.chain
+    
+    def query_complex(self, question: str, history: list = [], verbose=False):
+        """Decompose the Query then combine the answers"""
+        if not self.vector_store_management.vs_initialized:
+            self.initialize_vector_store()
+
+        self.setup_rag_chain()
+
+        sub_queries = self.decomposer(question)
+
+        if verbose:
+            print("Intermediate questions:")
+            for query in sub_queries:
+                print(query)
+
+        answers = []
+        for query in sub_queries:
+            ans = self.chain.invoke({"input": query, "chat_history": history})["answer"]
+            answers.append(ans)
+
+        # responses = self.chain.batch([{"input": query, "chat_history": history} for query in sub_queries])
+        # for response in responses:
+        #     answers.append(response["answer"])
+
+        intermediate_prompt = ""
+        print("\n")
+        for i, ans in enumerate(answers):
+            intermediate_prompt += str(i+1) + ". " + ans + "\n"
+
+        self.combiner(question, intermediate_prompt)
 
     def query(self, question: str, history: list = []):
         """Query the RAG system"""
@@ -71,11 +106,14 @@ class RAGSystem:
 
         for token in self.chain.stream({"input": question, "chat_history": history}):
             if "answer" in token:
-                yield token["answer"]
-
+                print(token["answer"], end="")
+                # yield token["answer"]
 
 if __name__ == "__main__":
     from glob import glob
+    from dotenv import load_dotenv, dotenv_values 
+    # loading variables from .env file
+    load_dotenv() 
 
     docs_dir = "data/docs"
     persist_directory_dir = "data/chroma_db"
@@ -91,4 +129,16 @@ if __name__ == "__main__":
         documents = rag.load_documents()
         rag.initialize_vector_store(documents)  # documents
 
-    print(rag.query("Quand a eu lieu la traite négrière ?"))
+    queries = ["Quand a eu lieu la traite négrière ?", "Explique moi comment soigner la tiphoide puis le paludisme",
+               "Quels étaient les premiers peuples d'afrique centrale et quelles ont été leurs migrations?"]
+    
+    print("Comparaison méthodes de query")
+
+    for query in queries:
+        print("Query: ", query, "\n\n")
+        print("1. Méthode simple:--------------------\n")
+        rag.query(question=query)
+
+        print("\n\n2. Méthode par décomposition:-----------------------\n\n")
+        rag.query_complex(question=query, verbose=True)
+
