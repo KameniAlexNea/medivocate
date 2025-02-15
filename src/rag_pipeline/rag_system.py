@@ -49,7 +49,7 @@ class RAGSystem:
         if self.chain is not None:
             return
         retriever = self.vector_store_management.create_retriever(
-            self.top_k_documents, bm25_portion=0.03
+            self.llm, self.top_k_documents, bm25_portion=0.03
         )
 
         # Contextualize question

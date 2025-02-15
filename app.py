@@ -1,4 +1,6 @@
 import os
+
+os.environ["IS_APP"] = "1"
 from typing import List
 
 import gradio as gr

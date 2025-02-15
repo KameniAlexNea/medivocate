@@ -119,6 +119,7 @@ class CustomEmbedding(BaseModel, Embeddings):
             List[float]: The embedded query vector.
         """
         try:
+            logging.info(text)
             embed = self.hosted_embedding.embed_query(text)
         except Exception as e:
             logging.warning(f"Issue with hosted embedding, moving to CPU: {e}")
