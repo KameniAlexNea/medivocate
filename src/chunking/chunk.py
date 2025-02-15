@@ -12,7 +12,7 @@ from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
-
+import tiktoken
 from ..preprocessing.processor import Processor
 from ..utilities.llm_models import get_llm_model_chat
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
@@ -22,8 +22,8 @@ class ChunkingManager:
     def __init__(
         self,
         llm: ChatOllama,
-        chunk_size=4000,
-        chunk_overlap=200,
+        chunk_size=512,
+        chunk_overlap=75,
         top_n=3,
         keyphrase_ngram_range=(1, 1),
     ):
