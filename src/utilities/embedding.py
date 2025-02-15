@@ -31,12 +31,12 @@ class CustomEmbedding(BaseModel, Embeddings):
         """
         if "nomic" in os.getenv("HF_MODEL"):
             return (
-                "search_query: "
+                "query"
                 if (os.getenv("IS_APP", "0") == "1")
                 else "search_document: "
             )
         return (
-            "Represent this sentence for searching relevant passages:"
+            "Represent this sentence for searching relevant passages"
             if (os.getenv("IS_APP", "0") == "1")
             else ""
         )
