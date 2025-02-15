@@ -1,0 +1,12 @@
+-améliorer le prompt (supprimer les ambiguités)
+-amélioration chunking
+-utilisation des métadonnées
+-checker la manière de chunker
+-améliorer la sélection des données source
+-voir comment séparer les vector store par thème, se concentrer sur le cmr?
+- on peut splitter par thème, par région, par époque
+-indexation hierarchique
+-gestion des sessions d'utilisateur
+-ajouter la source des résultats dans la réponse du llm
+-voir comment synchroniser le code GitHub sur huggingface
+-faire les tests d'intégration
