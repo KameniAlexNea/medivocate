@@ -11,9 +11,6 @@ from langchain.chains.history_aware_retriever import (
 )
 from langchain.chains.retrieval import create_retrieval_chain
 
-from src.prompt_engineering.prompt_combiner import PromptCombiner
-from src.prompt_engineering.query_decomposer import QueryDecomposer
-
 from ..utilities.llm_models import get_llm_model_chat
 from ..vector_store.vector_store import VectorStoreManager
 from .prompts import CHAT_PROMPT, CONTEXTUEL_QUERY_PROMPT
@@ -31,10 +28,9 @@ class RAGSystem:
         self.llm = self._get_llm()
         self.chain: Optional[BaseConversationalRetrievalChain] = None
         self.vector_store_management = VectorStoreManager(
-            docs_dir, persist_directory_dir, batch_size
+            persist_directory_dir, batch_size
         )
-        self.decomposer = QueryDecomposer(self.llm)
-        self.combiner = PromptCombiner(self.llm)
+        self.docs_dir = docs_dir
 
     def _get_llm(
         self,
@@ -43,7 +39,7 @@ class RAGSystem:
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
-        return self.vector_store_management.load_and_process_documents()
+        return self.vector_store_management.load_and_process_documents(self.docs_dir)
 
     def initialize_vector_store(self, documents: List = None):
         """Initialize or load the vector store"""
@@ -53,7 +49,7 @@ class RAGSystem:
         if self.chain is not None:
             return
         retriever = self.vector_store_management.create_retriever(
-            self.top_k_documents, bm25_portion=0.03
+            self.llm, self.top_k_documents, bm25_portion=0.03
         )
 
         # Contextualize question
@@ -68,36 +64,6 @@ class RAGSystem:
 
         return self.chain
 
-    def query_complex(self, question: str, history: list = [], verbose=False):
-        """Decompose the Query then combine the answers"""
-        if not self.vector_store_management.vs_initialized:
-            self.initialize_vector_store()
-
-        self.setup_rag_chain()
-
-        sub_queries = self.decomposer(question)
-
-        if verbose:
-            print("Intermediate questions:")
-            for query in sub_queries:
-                print(query)
-
-        answers = []
-        for query in sub_queries:
-            ans = self.chain.invoke({"input": query, "chat_history": history})["answer"]
-            answers.append(ans)
-
-        # responses = self.chain.batch([{"input": query, "chat_history": history} for query in sub_queries])
-        # for response in responses:
-        #     answers.append(response["answer"])
-
-        intermediate_prompt = ""
-        print("\n")
-        for i, ans in enumerate(answers):
-            intermediate_prompt += str(i + 1) + ". " + ans + "\n"
-
-        self.combiner(question, intermediate_prompt)
-
     def query(self, question: str, history: list = []):
         """Query the RAG system"""
         if not self.vector_store_management.vs_initialized:
@@ -107,8 +73,7 @@ class RAGSystem:
 
         for token in self.chain.stream({"input": question, "chat_history": history}):
             if "answer" in token:
-                print(token["answer"], end="")
-                # yield token["answer"]
+                yield token["answer"]
 
 
 if __name__ == "__main__":

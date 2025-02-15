@@ -1,6 +1,7 @@
 import argparse
 import os
 from glob import glob
+os.environ["IS_APP"] = "0"
 
 from ..rag_pipeline.rag_system import RAGSystem
 
@@ -20,7 +21,7 @@ if __name__ == "__main__":
         help="Directory to persist vector store.",
     )
     parser.add_argument(
-        "--batch_size", type=str, default=64, help="Embedding batch size."
+        "--batch_size", type=int, default=64, help="Embedding batch size."
     )
     args = parser.parse_args()
 

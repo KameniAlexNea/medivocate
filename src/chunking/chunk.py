@@ -63,9 +63,9 @@ class ChunkingManager:
     def split_text_into_large_chunks(self, text, target_word_count=500):
         return self.processor.split_text_into_large_chunks(text, target_word_count)
 
-    def retrieve_documents_from_file(
+    def retrieve_documents_from_folder(
         self,
-        file_path,
+        folder_path,
         use_llm_cleaning=False,
         use_llm_for_keywords=False,
         summarize_before_chunk=False,
@@ -74,12 +74,25 @@ class ChunkingManager:
         verbose=False,
         target_word_count=500,
     ):
+        """
+        Load all .txt files in the folder (which represents a book), merge their contents,
+        and process them similarly to a single file.
+        """
         try:
-            with open(file_path, mode="r", encoding="utf-8") as f:
-                text = f.read()
+            # Get all text files in the folder
+            files = sorted(glob(os.path.join(folder_path, "*.txt")))
+            if not files:
+                logging.warning(f"No text files found in folder: {folder_path}")
+                return []
+            merged_text = ""
+            for file in files:
+                with open(file, mode="r", encoding="utf-8") as f:
+                    merged_text += f.read() + "\n"
 
             if verbose:
-                print(f"{'*' * 38}\nRaw text:\n{text}\n{'-' * 25}\n")
+                print(f"{'*' * 38}\nMerged text from folder {folder_path}:\n{merged_text}\n{'-' * 25}\n")
+
+            text = merged_text
 
             if use_llm_cleaning:
                 text = self.clean_text(text)
@@ -90,28 +103,20 @@ class ChunkingManager:
                     if verbose:
                         print("---- Document Category -----")
                         print(category)
-
-                    if (
-                        "contenu" not in category.lower()
-                        and not self.processor.is_valid_file(text)
-                    ):
-                        logging.warning(f"Invalid text in file: {file_path}")
+                    if ("contenu" not in category.lower() and not self.processor.is_valid_file(text)):
+                        logging.warning(f"Invalid text in folder: {folder_path}")
                         return []
 
             if verbose:
                 print(f"Cleaned text:\n{text}\n{'*' * 38}\n")
 
             if summarize_before_chunk:
-                large_chunks = self.split_text_into_large_chunks(
-                    text, target_word_count
-                )
+                large_chunks = self.split_text_into_large_chunks(text, target_word_count)
                 summaries = self.generate_summaries(large_chunks)
-
                 if verbose:
                     print("****** Summary ******")
                     for chunk, summary in zip(large_chunks, summaries):
                         print(f"\nText: \n{chunk}\n\nSummary: \n{summary}\n")
-
                 text = "\n".join(summaries)
 
             chunks = self.processor.text_splitter.split_text(text)
@@ -125,28 +130,26 @@ class ChunkingManager:
             documents = [
                 Document(
                     page_content=chunk,
-                    metadata={"source": file_path, "keywords": keywords},
+                    metadata={"source": folder_path, "keywords": keywords, "chunk_index": str(i)},
                     id=str(uuid4().hex),
                 )
-                for chunk, keywords in zip(chunks, keywords_list)
+                for i, (chunk, keywords) in enumerate(zip(chunks, keywords_list))
             ]
             return documents
 
         except Exception as e:
-            logging.error(f"Error processing file {file_path}: {e}")
+            logging.error(f"Error processing folder {folder_path}: {e}")
             return []
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Generate questions from text files.")
-    parser.add_argument("--input_folder", type=str, help="Path to input text files.")
-    parser.add_argument("--chunk_size", type=int, default=4000, help="Chunk size.")
-    parser.add_argument("--chunk_overlap", type=int, default=200, help="Chunk overlap.")
-    parser.add_argument(
-        "--save_folder", type=str, help="Path to save extracted chunks."
-    )
+    parser = argparse.ArgumentParser(description="Generate questions from OCR'd books.")
+    parser.add_argument("--input_folder", type=str, help="Path to folder containing book sub-folders.")
+    parser.add_argument("--chunk_size", type=int, default=512, help="Chunk size.")
+    parser.add_argument("--chunk_overlap", type=int, default=75, help="Chunk overlap.")
+    parser.add_argument("--save_folder", type=str, help="Path to save extracted chunks.")
     args = parser.parse_args()
 
     load_dotenv()
@@ -158,11 +161,13 @@ if __name__ == "__main__":
 
     os.makedirs(args.save_folder, exist_ok=True)
 
-    files = sorted(glob(os.path.join(args.input_folder, "*/*.txt")))
+    # Each subfolder in input_folder is a book
+    folders = sorted(glob(os.path.join(args.input_folder, "*")))
+    folders = [i for i in folders if os.path.isdir(i)]
 
-    def process_and_save(file_path):
-        documents = chunking_manager.retrieve_documents_from_file(
-            file_path=file_path,
+    def process_and_save(folder_path):
+        documents = chunking_manager.retrieve_documents_from_folder(
+            folder_path=folder_path,
             verbose=False,
             use_llm_for_keywords=False,
             summarize_before_chunk=False,
@@ -172,7 +177,7 @@ if __name__ == "__main__":
         )
 
         if not documents:
-            logging.warning(f"No documents extracted from {file_path}")
+            logging.warning(f"No documents extracted from {folder_path}")
         for doc in documents:
             with open(
                 os.path.join(args.save_folder, f"{doc.id}.json"), "w", encoding="utf-8"
@@ -180,4 +185,4 @@ if __name__ == "__main__":
                 json.dump(doc.to_json(), f, indent=4, ensure_ascii=False)
 
     with ThreadPoolExecutor(max_workers=4) as executor:
-        list(tqdm(executor.map(process_and_save, files), total=len(files)))
+        list(tqdm(executor.map(process_and_save, folders), total=len(folders)))

@@ -55,7 +55,7 @@ contextualize_q_system_prompt = (
 
 CONTEXTUEL_QUERY_PROMPT = ChatPromptTemplate.from_messages(
     [
-        SystemMessagePromptTemplate.from_template(contextualize_q_system_prompt),
+        # SystemMessagePromptTemplate.from_template(contextualize_q_system_prompt),
         MessagesPlaceholder("chat_history"),
         HumanMessagePromptTemplate.from_template("{input}"),
     ]

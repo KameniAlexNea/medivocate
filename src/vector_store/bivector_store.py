@@ -11,7 +11,7 @@ from transformers import AutoTokenizer
 from ..utilities.llm_models import get_llm_model_embedding
 from .document_loader import DocumentLoader
 from .vector_store import get_collection_name
-
+from .prompts import DEFAULT_QUERY_PROMPT
 
 class VectorStoreManager:
     """
@@ -123,15 +123,16 @@ class VectorStoreManager:
             ),
             llm=llm,
             include_original=True,
+            prompt=DEFAULT_QUERY_PROMPT
         )
         return self.vector_store
 
-    def load_and_process_documents(self) -> List[Document]:
+    def load_and_process_documents(self, doc_dir) -> List[Document]:
         """
         Loads and processes documents from the specified directory.
 
         Returns:
             List[Document]: List of loaded and processed documents.
         """
-        loader = DocumentLoader()
+        loader = DocumentLoader(doc_dir)
         return loader.load_documents()

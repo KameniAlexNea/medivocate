@@ -31,12 +31,12 @@ class CustomEmbedding(BaseModel, Embeddings):
         """
         if "nomic" in os.getenv("HF_MODEL"):
             return (
-                "search_query: "
+                "query"
                 if (os.getenv("IS_APP", "0") == "1")
                 else "search_document: "
             )
         return (
-            "Represent this sentence for searching relevant passages:"
+            "Represent this sentence for searching relevant passages"
             if (os.getenv("IS_APP", "0") == "1")
             else ""
         )
@@ -119,6 +119,7 @@ class CustomEmbedding(BaseModel, Embeddings):
             List[float]: The embedded query vector.
         """
         try:
+            logging.info(text)
             embed = self.hosted_embedding.embed_query(text)
         except Exception as e:
             logging.warning(f"Issue with hosted embedding, moving to CPU: {e}")
