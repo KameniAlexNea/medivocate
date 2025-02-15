@@ -10,6 +10,7 @@ from langchain.chains.history_aware_retriever import (
     create_history_aware_retriever,
 )
 from langchain.chains.retrieval import create_retrieval_chain
+
 from src.prompt_engineering.prompt_combiner import PromptCombiner
 from src.prompt_engineering.query_decomposer import QueryDecomposer
 
@@ -64,9 +65,9 @@ class RAGSystem:
             self.history_aware_retriever, self.question_answer_chain
         )
         logging.info("RAG chain setup complete" + str(self.chain))
-        
+
         return self.chain
-    
+
     def query_complex(self, question: str, history: list = [], verbose=False):
         """Decompose the Query then combine the answers"""
         if not self.vector_store_management.vs_initialized:
@@ -93,7 +94,7 @@ class RAGSystem:
         intermediate_prompt = ""
         print("\n")
         for i, ans in enumerate(answers):
-            intermediate_prompt += str(i+1) + ". " + ans + "\n"
+            intermediate_prompt += str(i + 1) + ". " + ans + "\n"
 
         self.combiner(question, intermediate_prompt)
 
@@ -109,11 +110,14 @@ class RAGSystem:
                 print(token["answer"], end="")
                 # yield token["answer"]
 
+
 if __name__ == "__main__":
     from glob import glob
-    from dotenv import load_dotenv, dotenv_values 
+
+    from dotenv import load_dotenv
+
     # loading variables from .env file
-    load_dotenv() 
+    load_dotenv()
 
     docs_dir = "data/docs"
     persist_directory_dir = "data/chroma_db"
@@ -129,9 +133,12 @@ if __name__ == "__main__":
         documents = rag.load_documents()
         rag.initialize_vector_store(documents)  # documents
 
-    queries = ["Quand a eu lieu la traite négrière ?", "Explique moi comment soigner la tiphoide puis le paludisme",
-               "Quels étaient les premiers peuples d'afrique centrale et quelles ont été leurs migrations?"]
-    
+    queries = [
+        "Quand a eu lieu la traite négrière ?",
+        "Explique moi comment soigner la tiphoide puis le paludisme",
+        "Quels étaient les premiers peuples d'afrique centrale et quelles ont été leurs migrations?",
+    ]
+
     print("Comparaison méthodes de query")
 
     for query in queries:
@@ -141,4 +148,3 @@ if __name__ == "__main__":
 
         print("\n\n2. Méthode par décomposition:-----------------------\n\n")
         rag.query_complex(question=query, verbose=True)
-

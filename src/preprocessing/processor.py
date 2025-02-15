@@ -1,13 +1,16 @@
 import re
 import string
-
+import tiktoken
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 class Processor:
-    def __init__(self, chunk_size=4000, chunk_overlap=200):
+    def __init__(self, chunk_size=512, chunk_overlap=75):
+        encoding = tiktoken.get_encoding("cl100k_base")
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=lambda x: len(encoding.encode(x)),
         )
 
     @staticmethod
