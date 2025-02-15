@@ -1,6 +1,7 @@
 import argparse
 import os
 from glob import glob
+os.environ["IS_APP"] = "0"
 
 from ..rag_pipeline.rag_system import RAGSystem
 

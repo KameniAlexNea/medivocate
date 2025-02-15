@@ -17,7 +17,7 @@ def get_collection_name() -> str:
     Returns:
         str: Processed collection name.
     """
-    return os.getenv("HF_MODEL", "default_model").split(":")[0].split("/")[-1]
+    return "medivocate-" + os.getenv("HF_MODEL", "default_model").split(":")[0].split("/")[-1]
 
 
 class VectorStoreManager:
@@ -102,12 +102,12 @@ class VectorStoreManager:
         )
         return self.vector_store
 
-    def load_and_process_documents(self) -> List[Document]:
+    def load_and_process_documents(self, doc_dir: str) -> List[Document]:
         """
         Loads and processes documents from the specified directory.
 
         Returns:
             List[Document]: List of processed documents.
         """
-        loader = DocumentLoader()
+        loader = DocumentLoader(doc_dir)
         return loader.load_documents()

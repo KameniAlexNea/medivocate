@@ -28,8 +28,9 @@ class RAGSystem:
         self.llm = self._get_llm()
         self.chain: Optional[BaseConversationalRetrievalChain] = None
         self.vector_store_management = VectorStoreManager(
-            docs_dir, persist_directory_dir, batch_size
+            persist_directory_dir, batch_size
         )
+        self.docs_dir = docs_dir
 
     def _get_llm(
         self,
@@ -38,7 +39,7 @@ class RAGSystem:
 
     def load_documents(self) -> List:
         """Load and split documents from the specified directory"""
-        return self.vector_store_management.load_and_process_documents()
+        return self.vector_store_management.load_and_process_documents(self.docs_dir)
 
     def initialize_vector_store(self, documents: List = None):
         """Initialize or load the vector store"""
