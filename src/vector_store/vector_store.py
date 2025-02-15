@@ -1,13 +1,10 @@
 import os
-from typing import List, Union
+from typing import List
 
-from langchain.retrievers import EnsembleRetriever
-from langchain_chroma import Chroma
 from langchain.retrievers import MultiQueryRetriever
-from langchain_community.retrievers import BM25Retriever
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from tqdm import tqdm
-from transformers import AutoTokenizer
 
 from ..utilities.llm_models import get_llm_model_embedding
 from .document_loader import DocumentLoader
@@ -21,7 +18,6 @@ def get_collection_name() -> str:
         str: Processed collection name.
     """
     return os.getenv("HF_MODEL", "default_model").split(":")[0].split("/")[-1]
-
 
 
 class VectorStoreManager:

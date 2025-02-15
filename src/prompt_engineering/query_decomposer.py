@@ -16,8 +16,9 @@ Dans tous les cas, fournissez les sous-requêtes ou la requête d'origine sous f
 ...
 ]
 """
-from langchain.prompts import PromptTemplate
 import json
+
+from langchain.prompts import PromptTemplate
 
 
 class QueryDecomposer:
@@ -30,12 +31,11 @@ class QueryDecomposer:
         sub_queries = self.decomposition_chain.invoke({"query": query}).content
 
         try:
-            index_left = sub_queries.index('[')
-            index_right = sub_queries.index(']')
-            sub_queries = json.loads(sub_queries[index_left: index_right+1])
+            index_left = sub_queries.index("[")
+            index_right = sub_queries.index("]")
+            sub_queries = json.loads(sub_queries[index_left : index_right + 1])
             return sub_queries
         except json.JSONDecodeError:
             print("output format incorrect, query not divided")
 
         return [query]
-    
