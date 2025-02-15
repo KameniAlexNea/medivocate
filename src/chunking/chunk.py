@@ -125,10 +125,10 @@ class ChunkingManager:
             documents = [
                 Document(
                     page_content=chunk,
-                    metadata={"source": file_path, "keywords": keywords},
+                    metadata={"source": file_path, "keywords": keywords, "chunk_index": str(i)},
                     id=str(uuid4().hex),
                 )
-                for chunk, keywords in zip(chunks, keywords_list)
+                for i, (chunk, keywords) in enumerate(zip(chunks, keywords_list))
             ]
             return documents
 
@@ -142,8 +142,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Generate questions from text files.")
     parser.add_argument("--input_folder", type=str, help="Path to input text files.")
-    parser.add_argument("--chunk_size", type=int, default=4000, help="Chunk size.")
-    parser.add_argument("--chunk_overlap", type=int, default=200, help="Chunk overlap.")
+    parser.add_argument("--chunk_size", type=int, default=512, help="Chunk size.")
+    parser.add_argument("--chunk_overlap", type=int, default=75, help="Chunk overlap.")
     parser.add_argument(
         "--save_folder", type=str, help="Path to save extracted chunks."
     )
