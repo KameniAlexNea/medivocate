@@ -22,5 +22,4 @@ class PromptCombiner:
 
     def __call__(self, prompt, results):
         for token in self.combiner_chain.stream({"prompt": prompt, "results": results}):
-            print(token.content, end="")
-            # yield token.content
+            yield token.content
