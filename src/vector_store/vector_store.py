@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from ..utilities.llm_models import get_llm_model_embedding
 from .document_loader import DocumentLoader
-
+from .prompts import DEFAULT_QUERY_PROMPT
 
 def get_collection_name() -> str:
     """
@@ -99,6 +99,7 @@ class VectorStoreManager:
             ),
             llm=llm,
             include_original=True,
+            prompt=DEFAULT_QUERY_PROMPT
         )
         return self.vector_store
 
