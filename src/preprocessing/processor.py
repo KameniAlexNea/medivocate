@@ -1,5 +1,6 @@
 import re
 import string
+
 import tiktoken
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -34,7 +35,7 @@ class Processor:
         Returns:
             str: The cleaned and merged text.
         """
-        punctuation = {'.', '?', '!'}
+        punctuation = {".", "?", "!"}
         # Split text into non-empty, stripped lines.
         lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
         if not lines:
@@ -44,7 +45,7 @@ class Processor:
         for line in lines[1:]:
             last_line = merged[-1]
             # If the last line ends with a hyphen, remove it and merge without a space.
-            if last_line.endswith('-'):
+            if last_line.endswith("-"):
                 merged[-1] = last_line[:-1] + line
             # If the last line ends with sentence punctuation, start a new line.
             elif last_line and last_line[-1] in punctuation:
@@ -54,14 +55,17 @@ class Processor:
                 merged.append(line)
             # If the current line starts with uppercase and the previous line doesn't end with punctuation,
             # assume it's a new sentence/paragraph.
-            elif line and line[0].isupper() and (not last_line or last_line[-1] not in punctuation):
+            elif (
+                line
+                and line[0].isupper()
+                and (not last_line or last_line[-1] not in punctuation)
+            ):
                 merged.append(line)
             # Otherwise, join the current line with a space.
             else:
                 merged[-1] = last_line + " " + line
 
         return "\n".join(merged).strip()
-
 
     @staticmethod
     def is_potential_title(line: str) -> bool:

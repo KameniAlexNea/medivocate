@@ -12,7 +12,7 @@ from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
-import tiktoken
+
 from ..preprocessing.processor import Processor
 from ..utilities.llm_models import get_llm_model_chat
 from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
@@ -90,7 +90,9 @@ class ChunkingManager:
                     merged_text += f.read() + "\n"
 
             if verbose:
-                print(f"{'*' * 38}\nMerged text from folder {folder_path}:\n{merged_text}\n{'-' * 25}\n")
+                print(
+                    f"{'*' * 38}\nMerged text from folder {folder_path}:\n{merged_text}\n{'-' * 25}\n"
+                )
 
             text = merged_text
 
@@ -103,7 +105,10 @@ class ChunkingManager:
                     if verbose:
                         print("---- Document Category -----")
                         print(category)
-                    if ("contenu" not in category.lower() and not self.processor.is_valid_file(text)):
+                    if (
+                        "contenu" not in category.lower()
+                        and not self.processor.is_valid_file(text)
+                    ):
                         logging.warning(f"Invalid text in folder: {folder_path}")
                         return []
 
@@ -111,7 +116,9 @@ class ChunkingManager:
                 print(f"Cleaned text:\n{text}\n{'*' * 38}\n")
 
             if summarize_before_chunk:
-                large_chunks = self.split_text_into_large_chunks(text, target_word_count)
+                large_chunks = self.split_text_into_large_chunks(
+                    text, target_word_count
+                )
                 summaries = self.generate_summaries(large_chunks)
                 if verbose:
                     print("****** Summary ******")
@@ -130,7 +137,11 @@ class ChunkingManager:
             documents = [
                 Document(
                     page_content=chunk,
-                    metadata={"source": folder_path, "keywords": keywords, "chunk_index": str(i)},
+                    metadata={
+                        "source": folder_path,
+                        "keywords": keywords,
+                        "chunk_index": str(i),
+                    },
                     id=str(uuid4().hex),
                 )
                 for i, (chunk, keywords) in enumerate(zip(chunks, keywords_list))
@@ -146,10 +157,14 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Generate questions from OCR'd books.")
-    parser.add_argument("--input_folder", type=str, help="Path to folder containing book sub-folders.")
+    parser.add_argument(
+        "--input_folder", type=str, help="Path to folder containing book sub-folders."
+    )
     parser.add_argument("--chunk_size", type=int, default=512, help="Chunk size.")
     parser.add_argument("--chunk_overlap", type=int, default=75, help="Chunk overlap.")
-    parser.add_argument("--save_folder", type=str, help="Path to save extracted chunks.")
+    parser.add_argument(
+        "--save_folder", type=str, help="Path to save extracted chunks."
+    )
     args = parser.parse_args()
 
     load_dotenv()
