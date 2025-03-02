@@ -5,3 +5,4 @@ black
 autopep8
 autoflake
 isort
+pytest-cov
