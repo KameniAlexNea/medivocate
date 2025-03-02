@@ -1,13 +1,11 @@
-from types import SimpleNamespace
-
 # ...existing imports...
 from langchain_core.documents import Document
 
-from src.vector_store.bivector_store import VectorStoreManager
-
-
 # Dummy classes to simulate external dependencies
 from langchain_core.runnables import Runnable
+
+from src.vector_store.bivector_store import VectorStoreManager
+
 
 class DummyChroma(Runnable):
     def __init__(self, documents=None, **kwargs):
@@ -27,10 +25,9 @@ class DummyChroma(Runnable):
 
     def as_retriever(self, search_kwargs):
         return self
-    
+
     def invoke(self, *args, **kwargs):
         pass
-
 
 
 class DummyBM25(Runnable):

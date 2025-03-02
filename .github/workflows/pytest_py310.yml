@@ -27,7 +27,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run tests with coverage
-        run: pytest --cov=src --cov=evaluation --cov=ocr tests/
+        run: PYTHONPATH=$(pwd) pytest --cov=src --cov=evaluation --cov=ocr tests/
       
       - name: Show coverage report
         run: coverage report -m
