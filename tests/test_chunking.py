@@ -65,13 +65,12 @@ def test_retrieve_documents_no_valid_text(
     assert docs == []
 
 
-def test_retrieve_documents_from_folder(tmp_path, dummy_chunking_manager):
-    folder = tmp_path / "book"
+def test_retrieve_documents_with_llm_cleaning(tmp_path, dummy_chunking_manager):
+    folder = tmp_path / "cleaning"
     folder.mkdir()
-    file1 = folder / "page1.txt"
-    file2 = folder / "page2.txt"
-    file1.write_text("This is sample text for file one.")
-    file2.write_text("Another sample text for file two.")
+    file_path = folder / "doc.txt"
+    original_text = "This text requires cleaning and further processing."
+    file_path.write_text(original_text)
     docs = retrieve_documents_from_folder(
         dummy_chunking_manager,
         str(folder),
@@ -81,8 +80,52 @@ def test_retrieve_documents_from_folder(tmp_path, dummy_chunking_manager):
         check_text_validity=False,
         llm_check_text_validity=False,
         verbose=False,
-        target_word_count=10,
+        target_word_count=3,
     )
     assert isinstance(docs, list)
     if docs:
+        # llm_clean is set up to prepend "cleaned " to the input text
+        assert docs[0].page_content.startswith("cleaned ")
+
+
+def test_retrieve_documents_skip_small_file(tmp_path, dummy_chunking_manager):
+    folder = tmp_path / "small_file"
+    folder.mkdir()
+    file_path = folder / "short.txt"
+    # Write a small text that does not meet the word count threshold.
+    file_path.write_text("short")
+    docs = retrieve_documents_from_folder(
+        dummy_chunking_manager,
+        str(folder),
+        use_llm_cleaning=False,
+        use_llm_for_keywords=False,
+        summarize_before_chunk=False,
+        check_text_validity=False,
+        llm_check_text_validity=False,
+        verbose=False,
+        target_word_count=2,  # expecting at least 2 words
+    )
+    # The file doesn't meet the target word count so no document should be returned.
+    assert docs == []
+
+
+def test_retrieve_documents_with_keywords_enabled(tmp_path, dummy_chunking_manager):
+    folder = tmp_path / "keywords"
+    folder.mkdir()
+    file_path = folder / "doc.txt"
+    file_path.write_text("Some sample content for keyword extraction.")
+    docs = retrieve_documents_from_folder(
+        dummy_chunking_manager,
+        str(folder),
+        use_llm_cleaning=False,
+        use_llm_for_keywords=True,
+        summarize_before_chunk=False,
+        check_text_validity=False,
+        llm_check_text_validity=False,
+        verbose=False,
+        target_word_count=3,
+    )
+    assert isinstance(docs, list)
+    if docs:
+        # When llm_for_keywords is True, the dummy llm_keyword should add "dummy_kw"
         assert "dummy_kw" in docs[0].metadata.get("keywords", [])

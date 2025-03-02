@@ -7,7 +7,9 @@ from src.vector_store.bivector_store import VectorStoreManager
 
 
 # Dummy classes to simulate external dependencies
-class DummyChroma:
+from langchain_core.runnables import Runnable
+
+class DummyChroma(Runnable):
     def __init__(self, documents=None, **kwargs):
         self.documents = documents or []
         self.collection_name = kwargs.get("collection_name")
@@ -24,13 +26,20 @@ class DummyChroma:
         }
 
     def as_retriever(self, search_kwargs):
-        return SimpleNamespace(search_kwargs=search_kwargs)
+        return self
+    
+    def invoke(self, *args, **kwargs):
+        pass
 
 
-class DummyBM25:
+
+class DummyBM25(Runnable):
     def __init__(self, documents, tokenizer=None):
         self.documents = documents
         self.tokenizer = tokenizer
+
+    def invoke(self, *args, **kwargs):
+        pass
 
 
 class DummyMultiQueryRetriever:
@@ -60,11 +69,11 @@ def test_initialize_with_documents(monkeypatch):
     dummy_docs = [Document(page_content="Content", id="1", metadata={})]
 
     monkeypatch.setattr(
-        "medivocate.src.vector_store.bivector_store.Chroma.from_documents",
+        "src.vector_store.bivector_store.Chroma.from_documents",
         lambda **kwargs: DummyChroma(documents=kwargs.get("documents")),
     )
     monkeypatch.setattr(
-        "medivocate.src.vector_store.bivector_store.BM25Retriever.from_documents",
+        "src.vector_store.bivector_store.BM25Retriever.from_documents",
         lambda docs, tokenizer=None: DummyBM25(docs, tokenizer),
     )
 
@@ -80,12 +89,12 @@ def test_initialize_with_documents(monkeypatch):
 def test_initialize_without_documents(monkeypatch):
     # Patch Chroma constructor and get method
     monkeypatch.setattr(
-        "medivocate.src.vector_store.bivector_store.Chroma",
+        "src.vector_store.bivector_store.Chroma",
         lambda **kwargs: DummyChroma(**kwargs),
     )
     # Patch BM25Retriever.from_documents
     monkeypatch.setattr(
-        "medivocate.src.vector_store.bivector_store.BM25Retriever.from_documents",
+        "src.vector_store.bivector_store.BM25Retriever.from_documents",
         lambda docs, tokenizer=None: DummyBM25(docs, tokenizer),
     )
 
@@ -107,7 +116,7 @@ def test_create_retriever(monkeypatch):
 
     # Patch MultiQueryRetriever.from_llm to return a dummy retriever
     monkeypatch.setattr(
-        "medivocate.src.vector_store.bivector_store.MultiQueryRetriever.from_llm",
+        "src.vector_store.bivector_store.MultiQueryRetriever.from_llm",
         lambda retriever, llm, include_original, prompt: DummyMultiQueryRetriever(
             retriever, llm, include_original, prompt
         ),
@@ -123,7 +132,7 @@ def test_create_retriever(monkeypatch):
 # Test: Load and process documents using the dummy loader
 def test_load_and_process_documents(monkeypatch):
     monkeypatch.setattr(
-        "medivocate.src.vector_store.bivector_store.DocumentLoader",
+        "src.vector_store.bivector_store.DocumentLoader",
         lambda doc_dir: DummyDocumentLoader(doc_dir),
     )
     manager = VectorStoreManager(persist_directory="/tmp")
