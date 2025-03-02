@@ -10,7 +10,7 @@ from glob import glob
 
 from tqdm import tqdm
 
-from ..rag_pipeline.rag_system import RAGSystem
+from src.rag_pipeline.rag_system import RAGSystem
 
 
 

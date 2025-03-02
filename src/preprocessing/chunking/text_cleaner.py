@@ -2,7 +2,7 @@ import os
 
 from tqdm import tqdm
 
-from ..preprocessing.processor import Processor
+from ..processor import Processor
 
 
 def clean_text(text):

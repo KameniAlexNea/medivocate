@@ -11,7 +11,7 @@ from glob import glob
 
 from tqdm import tqdm
 
-from ..utilities.llm_models import get_llm_model_chat
+from src.utilities.llm_models import get_llm_model_chat
 from .prompts import OPEN_QUESTION_PROMPT
 
 
