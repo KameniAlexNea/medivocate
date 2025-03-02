@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from ..preprocessing.processor import Processor
 from ..utilities.llm_models import get_llm_model_chat
-from .llm import LLMCategory, LLMClean, LLMKeyWord, LLMSummary
+from .llm_model import LLMCategory, LLMClean, LLMKeyWord, LLMSummary
 
 
 class ChunkingManager:
