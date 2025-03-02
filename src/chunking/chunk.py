@@ -181,7 +181,7 @@ if __name__ == "__main__":
     folders = [i for i in folders if os.path.isdir(i)]
 
     def process_and_save(folder_path):
-        documents = chunking_manager.retrieve_documents_from_folder(
+        documents: list[Document] = chunking_manager.retrieve_documents_from_folder(
             folder_path=folder_path,
             verbose=False,
             use_llm_for_keywords=False,
