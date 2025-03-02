@@ -1,41 +1,41 @@
 name: Auto Format Code with Black
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
-      - main
+      - main  # Runs only when code is merged to main
 
 jobs:
   autoformat:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Ensure full history for proper git operations
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+
       - name: Install Tox
         run: pip install tox
+
       - name: Format code with tox
         run: |
           tox -e format
-          git diff
+          git diff --color  # Show changes for debugging
+
       - name: Commit formatted code if any changes exist
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           if [ -n "$(git status --porcelain)" ]; then
             git add .
-            git commit -m "Auto format code with tox"
-            git push;
+            git commit -m "Auto format code with Black"
+            git push
           else
-            echo "No changes to commit";
-          fi
+            echo "No changes to commit"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
