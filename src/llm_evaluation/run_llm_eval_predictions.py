@@ -12,13 +12,6 @@ from tqdm import tqdm
 
 from ..rag_pipeline.rag_system import RAGSystem
 
-docs_dir = "data/docs"
-persist_directory_dir = "data/chroma_db"
-batch_size = 64
-
-# Initialize RAG system
-rag = RAGSystem(docs_dir, persist_directory_dir, batch_size)
-rag.initialize_vector_store()
 
 
 def run_file_prediction(path: str, output_folder: str):
@@ -61,6 +54,34 @@ if __name__ == "__main__":
         type=str,
         help="Path to the folder where output files will be saved.",
     )
+
+    parser.add_argument(
+        "--docs_dir",
+        default="data/docs",
+        type=str,
+        help="Where documents are stored, optional",
+    )
+    parser.add_argument(
+        "--persist_directory_dir",
+        default="data/chroma_db",
+        type=str,
+        help="Persist directory of the RAGSystem (chroma_db for example)",
+    )
+    parser.add_argument(
+        "--batch_size",
+        default=64,
+        type=str,
+        help="Processing batch size",
+    )
     args = parser.parse_args()
+
+        
+    docs_dir = args.docs_dir
+    persist_directory_dir = args.persist_directory_dir
+    batch_size = args.batch_size
+
+    # Initialize RAG system
+    rag = RAGSystem(docs_dir, persist_directory_dir, batch_size)
+    rag.initialize_vector_store()
 
     run_predictions(args.input_folder, args.output_folder)
