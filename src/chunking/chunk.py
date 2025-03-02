@@ -34,21 +34,21 @@ class ChunkingManager:
         self.keyphrase_ngram_range = keyphrase_ngram_range
         self.kwb = KeyBERT(SentenceTransformer("all-mpnet-base-v2", device="cuda:0"))
 
-        self.summary_agent = LLMSummary(llm)
-        self.clean_agent = LLMClean(llm)
-        self.keyword_agent = LLMKeyWord(llm)
-        self.category_agent = LLMCategory(llm)
+        self.llm_summary = LLMSummary(llm)
+        self.llm_clean = LLMClean(llm)
+        self.llm_keyword = LLMKeyWord(llm)
+        self.llm_category = LLMCategory(llm)
         self.processor = Processor(chunk_size, chunk_overlap)
 
     def clean_text(self, text):
-        return self.clean_agent.process(text)
+        return self.llm_clean.process(text)
 
     def generate_summaries(self, paragraphs):
-        return self.summary_agent.batch_process(paragraphs)
+        return self.llm_summary.batch_process(paragraphs)
 
     def generate_keywords(self, paragraphs: Union[str, list[str]], use_llm=True):
         if use_llm:
-            return self.keyword_agent.batch_process(paragraphs)
+            return self.llm_keyword.batch_process(paragraphs)
 
         keywords = self.kwb.extract_keywords(
             paragraphs,
@@ -63,94 +63,97 @@ class ChunkingManager:
     def split_text_into_large_chunks(self, text, target_word_count=500):
         return self.processor.split_text_into_large_chunks(text, target_word_count)
 
-    def retrieve_documents_from_folder(
-        self,
-        folder_path,
-        use_llm_cleaning=False,
-        use_llm_for_keywords=False,
-        summarize_before_chunk=False,
-        check_text_validity=True,
-        llm_check_text_validity=False,
-        verbose=False,
-        target_word_count=500,
-    ):
-        """
-        Load all .txt files in the folder (which represents a book), merge their contents,
-        and process them similarly to a single file.
-        """
-        try:
-            # Get all text files in the folder
-            files = sorted(glob(os.path.join(folder_path, "*.txt")))
-            if not files:
-                logging.warning(f"No text files found in folder: {folder_path}")
-                return []
-            merged_text = ""
-            for file in files:
-                with open(file, mode="r", encoding="utf-8") as f:
-                    merged_text += f.read() + "\n"
 
-            if verbose:
-                print(
-                    f"{'*' * 38}\nMerged text from folder {folder_path}:\n{merged_text}\n{'-' * 25}\n"
-                )
-
-            text = merged_text
-
-            if use_llm_cleaning:
-                text = self.clean_text(text)
-
-            if check_text_validity:
-                if llm_check_text_validity:
-                    category = self.category_agent.process(text)
-                    if verbose:
-                        print("---- Document Category -----")
-                        print(category)
-                    if (
-                        "contenu" not in category.lower()
-                        and not self.processor.is_valid_file(text)
-                    ):
-                        logging.warning(f"Invalid text in folder: {folder_path}")
-                        return []
-
-            if verbose:
-                print(f"Cleaned text:\n{text}\n{'*' * 38}\n")
-
-            if summarize_before_chunk:
-                large_chunks = self.split_text_into_large_chunks(
-                    text, target_word_count
-                )
-                summaries = self.generate_summaries(large_chunks)
-                if verbose:
-                    print("****** Summary ******")
-                    for chunk, summary in zip(large_chunks, summaries):
-                        print(f"\nText: \n{chunk}\n\nSummary: \n{summary}\n")
-                text = "\n".join(summaries)
-
-            chunks = self.processor.text_splitter.split_text(text)
-            keywords_list = self.generate_keywords(chunks, use_llm=use_llm_for_keywords)
-
-            if verbose:
-                print("****** Chunks and Keywords ******")
-                for chunk, keywords in zip(chunks, keywords_list):
-                    print(f"\nChunk: \n{chunk}\nKeywords: \n{keywords}\n")
-
-            documents = [
-                Document(
-                    page_content=chunk,
-                    metadata={
-                        "source": folder_path,
-                        "keywords": keywords,
-                        "chunk_index": str(i),
-                    },
-                    id=str(uuid4().hex),
-                )
-                for i, (chunk, keywords) in enumerate(zip(chunks, keywords_list))
-            ]
-            return documents
-
-        except Exception as e:
-            logging.error(f"Error processing folder {folder_path}: {e}")
+def retrieve_documents_from_folder(
+    chunk_manager: ChunkingManager,
+    folder_path,
+    use_llm_cleaning=False,
+    use_llm_for_keywords=False,
+    summarize_before_chunk=False,
+    check_text_validity=True,
+    llm_check_text_validity=False,
+    verbose=False,
+    target_word_count=500,
+):
+    """
+    Load all .txt files in the folder (which represents a book), merge their contents,
+    and process them similarly to a single file.
+    """
+    try:
+        # Get all text files in the folder
+        files = sorted(glob(os.path.join(folder_path, "*.txt")))
+        if not files:
+            logging.warning(f"No text files found in folder: {folder_path}")
             return []
+        merged_text = ""
+        for file in files:
+            with open(file, mode="r", encoding="utf-8") as f:
+                merged_text += f.read() + "\n"
+
+        if verbose:
+            print(
+                f"{'*' * 38}\nMerged text from folder {folder_path}:\n{merged_text}\n{'-' * 25}\n"
+            )
+
+        text = merged_text
+
+        if use_llm_cleaning:
+            text = chunk_manager.clean_text(text)
+
+        if check_text_validity:
+            if llm_check_text_validity:
+                category = chunk_manager.llm_category.process(text)
+                if verbose:
+                    print("---- Document Category -----")
+                    print(category)
+                if (
+                    "contenu" not in category.lower()
+                    and not chunk_manager.processor.is_valid_file(text)
+                ):
+                    logging.warning(f"Invalid text in folder: {folder_path}")
+                    return []
+
+        if verbose:
+            print(f"Cleaned text:\n{text}\n{'*' * 38}\n")
+
+        if summarize_before_chunk:
+            large_chunks = chunk_manager.split_text_into_large_chunks(
+                text, target_word_count
+            )
+            summaries = chunk_manager.generate_summaries(large_chunks)
+            if verbose:
+                print("****** Summary ******")
+                for chunk, summary in zip(large_chunks, summaries):
+                    print(f"\nText: \n{chunk}\n\nSummary: \n{summary}\n")
+            text = "\n".join(summaries)
+
+        chunks = chunk_manager.processor.text_splitter.split_text(text)
+        keywords_list = chunk_manager.generate_keywords(
+            chunks, use_llm=use_llm_for_keywords
+        )
+
+        if verbose:
+            print("****** Chunks and Keywords ******")
+            for chunk, keywords in zip(chunks, keywords_list):
+                print(f"\nChunk: \n{chunk}\nKeywords: \n{keywords}\n")
+
+        documents = [
+            Document(
+                page_content=chunk,
+                metadata={
+                    "source": folder_path,
+                    "keywords": keywords,
+                    "chunk_index": str(i),
+                },
+                id=str(uuid4().hex),
+            )
+            for i, (chunk, keywords) in enumerate(zip(chunks, keywords_list))
+        ]
+        return documents
+
+    except Exception as e:
+        logging.error(f"Error processing folder {folder_path}: {e}")
+        return []
 
 
 if __name__ == "__main__":
@@ -181,7 +184,8 @@ if __name__ == "__main__":
     folders = [i for i in folders if os.path.isdir(i)]
 
     def process_and_save(folder_path):
-        documents: list[Document] = chunking_manager.retrieve_documents_from_folder(
+        documents: list[Document] = retrieve_documents_from_folder(
+            chunking_manager,
             folder_path=folder_path,
             verbose=False,
             use_llm_for_keywords=False,
