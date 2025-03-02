@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from ..preprocessing.processor import Processor
 from ..utilities.llm_models import get_llm_model_chat
-from .agents import CategoryAgent, CleanAgent, KeyWordAgent, SummaryAgent
+from .llm import LLMCategory, LLMClean, LLMKeyWord, LLMSummary
 
 
 class ChunkingManager:
@@ -34,10 +34,10 @@ class ChunkingManager:
         self.keyphrase_ngram_range = keyphrase_ngram_range
         self.kwb = KeyBERT(SentenceTransformer("all-mpnet-base-v2", device="cuda:0"))
 
-        self.summary_agent = SummaryAgent(llm)
-        self.clean_agent = CleanAgent(llm)
-        self.keyword_agent = KeyWordAgent(llm)
-        self.category_agent = CategoryAgent(llm)
+        self.summary_agent = LLMSummary(llm)
+        self.clean_agent = LLMClean(llm)
+        self.keyword_agent = LLMKeyWord(llm)
+        self.category_agent = LLMCategory(llm)
         self.processor = Processor(chunk_size, chunk_overlap)
 
     def clean_text(self, text):
