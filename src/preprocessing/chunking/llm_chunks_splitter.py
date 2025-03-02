@@ -30,12 +30,13 @@ import time
 from glob import glob
 
 import tqdm
+
 from ..utilities.llm_models import get_llm_model_chat
 
 
 class TextCleaner:
     def __init__(self):
-        self.llm = get_llm_model_chat(temperature=.3, max_tokens=None)
+        self.llm = get_llm_model_chat(temperature=0.3, max_tokens=None)
 
     def prepare_text(self, text: str):
         return [
@@ -70,7 +71,7 @@ class TextCleaner:
             try:
                 cleaned = self.clean_texts(raws)
                 time.sleep(1)
-            except Exception as ex:
+            except Exception:
                 time.sleep(1)
                 cleaned = self.clean_texts(raws)
                 time.sleep(1)

@@ -4,9 +4,7 @@ from typing import Any, List
 
 import torch
 from langchain_core.embeddings import Embeddings
-from langchain_huggingface import (
-    HuggingFaceEmbeddings,
-)
+from langchain_huggingface import HuggingFaceEmbeddings
 from pydantic import BaseModel, Field
 
 
@@ -77,11 +75,12 @@ class CustomEmbedding(BaseModel, Embeddings):
         try:
             embed = self.cpu_embedding.embed_documents(texts)
             return (
-                [e[: self.matryoshka_dim] for e in embed] if self.matryoshka_dim else embed
+                [e[: self.matryoshka_dim] for e in embed]
+                if self.matryoshka_dim
+                else embed
             )
         except Exception as e:
             logging.warning(f"Issue with batch hosted embedding, moving to CPU: {e}")
-        
 
     def embed_query(self, text: str) -> List[float]:
         """

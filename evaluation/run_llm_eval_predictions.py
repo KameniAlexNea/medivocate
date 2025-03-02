@@ -13,7 +13,6 @@ from tqdm import tqdm
 from src.rag_pipeline.rag_system import RAGSystem
 
 
-
 def run_file_prediction(path: str, output_folder: str):
     raw: dict[str, str] = json.load(open(path))
     llm_answer = "".join(rag.query(raw["question"]))
@@ -75,7 +74,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-        
     docs_dir = args.docs_dir
     persist_directory_dir = args.persist_directory_dir
     batch_size = args.batch_size

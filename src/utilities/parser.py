@@ -33,7 +33,6 @@ def parse_json(json_str: str):
             print("Error parsing JSON block:", e)
             return None
 
-
     # Attempt 3: Fallback to extracting text between the first '{' and the last '}'.
     start = json_str.find("{")
     end = json_str.rfind("}")

@@ -13,8 +13,8 @@ from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
-from ..processor import Processor
 from ...utilities.llm_models import get_llm_model_chat
+from ..processor import Processor
 from .llm_model import LLMCategory, LLMClean, LLMKeyWord, LLMSummary
 
 
