@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 
 import pytest
-from langchain_core.documents import Document
 from langchain_core.runnables import Runnable
 
 from src.preprocessing.chunking.chunk import (
@@ -135,7 +134,10 @@ def __initialize_vector_store_called(monkeypatch, dummy_rag):
     def fake_initialize(documents=None):
         nonlocal called
         called = True
-    monkeypatch.setattr(dummy_rag.vector_store_management, "initialize_vector_store", fake_initialize)
+
+    monkeypatch.setattr(
+        dummy_rag.vector_store_management, "initialize_vector_store", fake_initialize
+    )
     dummy_rag.vector_store_management.vs_initialized = False
     list(dummy_rag.query("dummy question"))
     assert called is True
@@ -147,7 +149,10 @@ def __initialize_vector_store_not_called(monkeypatch, dummy_rag):
     def fake_initialize(documents=None):
         nonlocal called
         called = True
-    monkeypatch.setattr(dummy_rag.vector_store_management, "initialize_vector_store", fake_initialize)
+
+    monkeypatch.setattr(
+        dummy_rag.vector_store_management, "initialize_vector_store", fake_initialize
+    )
     dummy_rag.vector_store_management.vs_initialized = True
     list(dummy_rag.query("dummy question"))
     assert called is False
