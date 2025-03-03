@@ -1,12 +1,4 @@
-import os
-import shutil
-import zipfile
-
-from src.utilities.llm_models import (
-    get_llm_model_chat,
-    get_llm_model_embedding,
-)
-from src.utilities.load_data import download_and_prepare_data
+from src.utilities.llm_models import get_llm_model_embedding
 
 # Import functions to test
 from src.utilities.parser import parse_json
@@ -35,6 +27,7 @@ def test_parse_json_invalid():
 
 
 # ---------- Tests for LLM Models ----------
+
 
 def test_get_llm_model_embedding(monkeypatch):
     # Set the flag to use HF embedding; if not, defaults are used.

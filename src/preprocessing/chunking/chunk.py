@@ -6,13 +6,14 @@ from glob import glob
 from typing import Union
 from uuid import uuid4
 
+import torch
 from dotenv import load_dotenv
 from keybert import KeyBERT
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
-import torch
+
 from ...utilities.llm_models import get_llm_model_chat
 from ..processor import Processor
 from .llm_model import LLMCategory, LLMClean, LLMKeyWord, LLMSummary
@@ -32,7 +33,12 @@ class ChunkingManager:
         self.llm = llm
         self.top_n = top_n
         self.keyphrase_ngram_range = keyphrase_ngram_range
-        self.kwb = KeyBERT(SentenceTransformer("all-mpnet-base-v2", device="cuda:0" if torch.cuda.is_available() else "cpu"))
+        self.kwb = KeyBERT(
+            SentenceTransformer(
+                "all-mpnet-base-v2",
+                device="cuda:0" if torch.cuda.is_available() else "cpu",
+            )
+        )
 
         self.llm_summary = LLMSummary(llm)
         self.llm_clean = LLMClean(llm)

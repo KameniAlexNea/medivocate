@@ -1,24 +1,25 @@
 from types import SimpleNamespace
 
 import pytest
-
-from src.rag_pipeline.rag_system import RAGSystem
+from langchain_core.documents import Document
 from langchain_core.runnables import Runnable
 
 from src.preprocessing.chunking.chunk import (
     ChunkingManager,
     retrieve_documents_from_folder,
 )
+from src.rag_pipeline.rag_system import RAGSystem
 
 
 # Dummy chain to simulate streaming of answers
 class DummyChain(Runnable):
-    def stream(self, input, config = None, **kwargs):
+    def stream(self, input, config=None, **kwargs):
         for i in range(3):
-            yield f"Answer part {i}"
-    
-    def invoke(self, input, config = None, **kwargs):
-        return list(self.stream(input))
+            yield Document(page_content=f"Answer part {i}")
+
+    def invoke(self, input, config=None, **kwargs):
+        result = list(self.stream(input, config=config, **kwargs))
+        return Document(page_content=" ".join(doc.page_content for doc in result))
 
 
 def dummy_create_retriever(self, llm, n_documents, bm25_portion=0.8):
@@ -50,44 +51,6 @@ def test_rag_system_query(dummy_rag):
     dummy_rag.setup_rag_chain()
     answers = list(dummy_rag.query("dummy question"))
     assert all("Answer part" in ans for ans in answers)
-
-
-
-class DummyChain(Runnable):
-    def stream(self, input, config = None, **kwargs):
-        # Yield dummy tokens
-        for i in range(3):
-            yield {"answer": f"Answer part {i}"}
-
-    def invoke(self, input, config = None, **kwargs):
-        return list(self.stream(input, config = config, **kwargs))
-
-
-def dummy_create_retriever(self, llm, n_documents, bm25_portion=0.8):
-    self.vector_stores = {
-        "bm25": SimpleNamespace(k=n_documents),
-        "chroma": SimpleNamespace(as_retriever=lambda search_kwargs: "dummy_retriever"),
-    }
-    # Dummy chain simulating MultiQueryRetriever
-    self.vector_store = DummyChain()
-    return self.vector_store
-
-
-@pytest.fixture
-def dummy_rag(monkeypatch):
-    rag = RAGSystem(docs_dir="dummy", persist_directory_dir="/tmp", batch_size=10)
-    # Monkey-patch initialize_vector_store and create_retriever
-    monkeypatch.setattr(
-        rag.vector_store_management,
-        "initialize_vector_store",
-        lambda documents=None: None,
-    )
-    monkeypatch.setattr(
-        rag.vector_store_management,
-        "create_retriever",
-        dummy_create_retriever.__get__(rag.vector_store_management),
-    )
-    return rag
 
 
 class DummyLLM:
