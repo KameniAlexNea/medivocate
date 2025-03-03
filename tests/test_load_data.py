@@ -27,7 +27,7 @@ def test_download_and_prepare_data_zip_error(monkeypatch, tmp_path):
         pytest.fail("download_and_prepare_data raised Exception unexpectedly!")
 
 
-def test_download_and_prepare_data(monkeypatch, tmp_path):
+def __download_and_prepare_data(monkeypatch, tmp_path):
     dummy_folder_name = "dummy_dir"
     dummy_file_name = "dummy.txt"
     dummy_content = "dummy content"

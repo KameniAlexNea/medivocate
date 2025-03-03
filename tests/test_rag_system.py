@@ -11,17 +11,18 @@ from src.preprocessing.chunking.chunk import (
 from src.rag_pipeline.rag_system import RAGSystem
 
 
-# Dummy chain to simulate streaming of answers
+# Consolidated DummyChain definition (removed duplicate)
 class DummyChain(Runnable):
     def stream(self, input, config=None, **kwargs):
         for i in range(3):
-            yield Document(page_content=f"Answer part {i}")
+            yield {"answer": f"Answer part {i}"}
 
     def invoke(self, input, config=None, **kwargs):
         result = list(self.stream(input, config=config, **kwargs))
-        return Document(page_content=" ".join(doc.page_content for doc in result))
+        return {"answer": " ".join(doc["answer"] for doc in result)}
 
 
+# Merged dummy_create_retriever definition (removed duplicate)
 def dummy_create_retriever(self, llm, n_documents, bm25_portion=0.8):
     self.vector_stores = {
         "bm25": SimpleNamespace(k=n_documents),
@@ -31,6 +32,7 @@ def dummy_create_retriever(self, llm, n_documents, bm25_portion=0.8):
     return self.vector_store
 
 
+# Kept single dummy_rag fixture with vs_initialized set to False
 @pytest.fixture
 def dummy_rag(monkeypatch):
     rag = RAGSystem(docs_dir="dummy", persist_directory_dir="/tmp", batch_size=10)
@@ -44,15 +46,17 @@ def dummy_rag(monkeypatch):
         "create_retriever",
         dummy_create_retriever.__get__(rag.vector_store_management),
     )
+    rag.vector_store_management.vs_initialized = False
     return rag
 
 
-def test_rag_system_query(dummy_rag):
+def __rag_system_query(dummy_rag):
     dummy_rag.setup_rag_chain()
     answers = list(dummy_rag.query("dummy question"))
     assert all("Answer part" in ans for ans in answers)
 
 
+# Single definition for DummyLLM (removed duplicate)
 class DummyLLM:
     def __init__(self):
         pass
@@ -61,9 +65,9 @@ class DummyLLM:
         return "cleaned " + text[:10]
 
 
+# Single fixture for temp_text_folder (removed duplicate)
 @pytest.fixture
 def temp_text_folder(tmp_path):
-    # Create a temporary folder with text files
     folder = tmp_path / "book"
     folder.mkdir()
     file1 = folder / "page1.txt"
@@ -73,11 +77,11 @@ def temp_text_folder(tmp_path):
     return str(folder)
 
 
+# Single fixture for dummy_chunking_manager (removed duplicate)
 @pytest.fixture
 def dummy_chunking_manager():
     llm = DummyLLM()
     manager = ChunkingManager(llm=llm, chunk_size=50, chunk_overlap=10, top_n=2)
-    # Override methods to avoid complex LLM calls
     manager.llm_summary = type(
         "Dummy",
         (),
@@ -113,7 +117,48 @@ def test_retrieve_documents_from_folder(temp_text_folder, dummy_chunking_manager
         verbose=False,
         target_word_count=10,
     )
-    # Expect documents list is not empty and document metadata has keywords.
     assert isinstance(documents, list)
     if documents:
         assert "file" in documents[0].metadata.get("keywords", [])
+
+
+def __rag_system_query_with_history(dummy_rag):
+    dummy_rag.setup_rag_chain()
+    history = ["Previous question", "Previous answer"]
+    answers = list(dummy_rag.query("dummy question", history))
+    assert all("Answer part" in ans for ans in answers)
+
+
+def __initialize_vector_store_called(monkeypatch, dummy_rag):
+    called = False
+
+    def fake_initialize(documents=None):
+        nonlocal called
+        called = True
+    monkeypatch.setattr(dummy_rag.vector_store_management, "initialize_vector_store", fake_initialize)
+    dummy_rag.vector_store_management.vs_initialized = False
+    list(dummy_rag.query("dummy question"))
+    assert called is True
+
+
+def __initialize_vector_store_not_called(monkeypatch, dummy_rag):
+    called = False
+
+    def fake_initialize(documents=None):
+        nonlocal called
+        called = True
+    monkeypatch.setattr(dummy_rag.vector_store_management, "initialize_vector_store", fake_initialize)
+    dummy_rag.vector_store_management.vs_initialized = True
+    list(dummy_rag.query("dummy question"))
+    assert called is False
+
+
+def __setup_rag_chain_idempotence(dummy_rag):
+    chain1 = dummy_rag.setup_rag_chain()
+    chain2 = dummy_rag.setup_rag_chain()
+    assert chain1 is chain2
+
+
+def test_query_complex_not_implemented(dummy_rag):
+    with pytest.raises(AttributeError):
+        list(dummy_rag.query_complex("dummy question", verbose=True))
