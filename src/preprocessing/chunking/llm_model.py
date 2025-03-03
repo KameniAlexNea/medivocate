@@ -2,7 +2,7 @@ from langchain.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
 
 
-class BaseAgent:
+class Base:
     def __init__(self, llm: ChatOllama, prompt: str):
         self.llm = llm
         self.prompt_template = PromptTemplate(
@@ -23,7 +23,7 @@ class BaseAgent:
         return self.__call__(text)
 
 
-class SummaryAgent(BaseAgent):
+class LLMSummary(Base):
     def __init__(self, llm: ChatOllama):
         summarize_prompt_template = """
 **Tâche :** Résumer l'extrait suivant d'un livre tout en préservant son flux logique, sa cohérence et sa structure de paragraphes.
@@ -42,7 +42,7 @@ class SummaryAgent(BaseAgent):
         super().__init__(llm, summarize_prompt_template)
 
 
-class CleanAgent(BaseAgent):
+class LLMClean(Base):
     def __init__(self, llm: ChatOllama):
         summarize_prompt_template = """
 **Tâche :** Nettoyer et préparer le texte d'entrée pour une utilisation optimale dans un modèle de génération augmentée par récupération (RAG).
@@ -63,7 +63,7 @@ class CleanAgent(BaseAgent):
         super().__init__(llm, summarize_prompt_template)
 
 
-class KeyWordAgent(BaseAgent):
+class LLMKeyWord(Base):
     def __init__(self, llm: ChatOllama):
         keywords_prompt_template = """
 **Tâche** : Identifier les trois mots-clés les plus importants du texte suivant extrait d'un livre.
@@ -82,7 +82,7 @@ Mots-clés, séparés par des virgules
         super().__init__(llm, keywords_prompt_template)
 
 
-class CategoryAgent(BaseAgent):
+class LLMCategory(Base):
     def __init__(self, llm: ChatOllama):
         cat_prompt_template = """
 **Prompt :**

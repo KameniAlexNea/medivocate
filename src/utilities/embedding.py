@@ -4,10 +4,7 @@ from typing import Any, List
 
 import torch
 from langchain_core.embeddings import Embeddings
-from langchain_huggingface import (
-    HuggingFaceEmbeddings,
-    HuggingFaceEndpointEmbeddings,
-)
+from langchain_huggingface import HuggingFaceEmbeddings
 from pydantic import BaseModel, Field
 
 
@@ -16,9 +13,6 @@ class CustomEmbedding(BaseModel, Embeddings):
     Custom embedding class that supports both hosted and CPU embeddings.
     """
 
-    hosted_embedding: HuggingFaceEndpointEmbeddings = Field(
-        default_factory=lambda: None
-    )
     cpu_embedding: HuggingFaceEmbeddings = Field(default_factory=lambda: None)
     matryoshka_dim: int = Field(default=256)
 
@@ -30,11 +24,7 @@ class CustomEmbedding(BaseModel, Embeddings):
             str: The instruction string.
         """
         if "nomic" in os.getenv("HF_MODEL"):
-            return (
-                "query"
-                if (os.getenv("IS_APP", "0") == "1")
-                else "search_document: "
-            )
+            return "query" if (os.getenv("IS_APP", "0") == "1") else "search_document: "
         return (
             "Represent this sentence for searching relevant passages"
             if (os.getenv("IS_APP", "0") == "1")
@@ -69,25 +59,8 @@ class CustomEmbedding(BaseModel, Embeddings):
             **kwargs: Additional keyword arguments.
         """
         super().__init__(**kwargs)
-        query_instruction = self.get_instruction()
         self.matryoshka_dim = matryoshka_dim
-        if torch.cuda.is_available():
-            logging.info("CUDA is available")
-            self.hosted_embedding = self.get_hf_embedd()
-            self.cpu_embedding = self.hosted_embedding
-        else:
-            logging.info("CUDA is not available")
-            self.hosted_embedding = HuggingFaceEndpointEmbeddings(
-                model=os.getenv("HF_MODEL"),
-                model_kwargs={
-                    "encode_kwargs": {
-                        "normalize_embeddings": True,
-                        "prompt": query_instruction,
-                    }
-                },
-                huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
-            )
-            self.cpu_embedding = self.get_hf_embedd()
+        self.cpu_embedding = self.get_hf_embedd()
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """
@@ -100,13 +73,14 @@ class CustomEmbedding(BaseModel, Embeddings):
             List[List[float]]: List of embedded document vectors.
         """
         try:
-            embed = self.hosted_embedding.embed_documents(texts)
+            embed = self.cpu_embedding.embed_documents(texts)
+            return (
+                [e[: self.matryoshka_dim] for e in embed]
+                if self.matryoshka_dim
+                else embed
+            )
         except Exception as e:
             logging.warning(f"Issue with batch hosted embedding, moving to CPU: {e}")
-            embed = self.cpu_embedding.embed_documents(texts)
-        return (
-            [e[: self.matryoshka_dim] for e in embed] if self.matryoshka_dim else embed
-        )
 
     def embed_query(self, text: str) -> List[float]:
         """
@@ -120,9 +94,7 @@ class CustomEmbedding(BaseModel, Embeddings):
         """
         try:
             logging.info(text)
-            embed = self.hosted_embedding.embed_query(text)
+            embed = self.cpu_embedding.embed_query(text)
+            return embed[: self.matryoshka_dim] if self.matryoshka_dim else embed
         except Exception as e:
             logging.warning(f"Issue with hosted embedding, moving to CPU: {e}")
-            embed = self.cpu_embedding.embed_query(text)
-        logging.warning(text)
-        return embed[: self.matryoshka_dim] if self.matryoshka_dim else embed

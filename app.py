@@ -6,7 +6,7 @@ from typing import List
 import gradio as gr
 
 from src.rag_pipeline.rag_system import RAGSystem
-from load_data import download_and_prepare_data
+from src.utilities.load_data import download_and_prepare_data
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 

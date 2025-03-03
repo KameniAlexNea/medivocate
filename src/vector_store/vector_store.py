@@ -10,6 +10,7 @@ from ..utilities.llm_models import get_llm_model_embedding
 from .document_loader import DocumentLoader
 from .prompts import DEFAULT_QUERY_PROMPT
 
+
 def get_collection_name() -> str:
     """
     Derives the collection name from an environment variable.
@@ -17,7 +18,10 @@ def get_collection_name() -> str:
     Returns:
         str: Processed collection name.
     """
-    return "medivocate-" + os.getenv("HF_MODEL", "default_model").split(":")[0].split("/")[-1]
+    return (
+        "medivocate-"
+        + os.getenv("HF_MODEL", "default_model").split(":")[0].split("/")[-1]
+    )
 
 
 class VectorStoreManager:
@@ -99,7 +103,7 @@ class VectorStoreManager:
             ),
             llm=llm,
             include_original=True,
-            prompt=DEFAULT_QUERY_PROMPT
+            prompt=DEFAULT_QUERY_PROMPT,
         )
         return self.vector_store
 
