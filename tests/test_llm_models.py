@@ -7,11 +7,11 @@ from src.utilities.llm_models import (
 def test_get_llm_model_chat(monkeypatch):
     monkeypatch.setenv("USE_OLLAMA_CHAT", "1")
     chat_model = get_llm_model_chat()
-    assert "ChatOllama" in str(chat_model)
+    assert "ChatOllama" in str(chat_model.__class__)
 
     monkeypatch.setenv("USE_OLLAMA_CHAT", "0")
     chat_model = get_llm_model_chat()
-    assert "ChatGroq" in str(chat_model)
+    assert "ChatGroq" in str(chat_model.__class__)
 
 
 def test_get_llm_model_embedding(monkeypatch):

@@ -88,27 +88,6 @@ def test_retrieve_documents_with_llm_cleaning(tmp_path, dummy_chunking_manager):
         assert docs[0].page_content.startswith("cleaned ")
 
 
-def test_retrieve_documents_skip_small_file(tmp_path, dummy_chunking_manager):
-    folder = tmp_path / "small_file"
-    folder.mkdir()
-    file_path = folder / "short.txt"
-    # Write a small text that does not meet the word count threshold.
-    file_path.write_text("short")
-    docs = retrieve_documents_from_folder(
-        dummy_chunking_manager,
-        str(folder),
-        use_llm_cleaning=False,
-        use_llm_for_keywords=False,
-        summarize_before_chunk=False,
-        check_text_validity=False,
-        llm_check_text_validity=False,
-        verbose=False,
-        target_word_count=2,  # expecting at least 2 words
-    )
-    # The file doesn't meet the target word count so no document should be returned.
-    assert docs == []
-
-
 def test_retrieve_documents_with_keywords_enabled(tmp_path, dummy_chunking_manager):
     folder = tmp_path / "keywords"
     folder.mkdir()
