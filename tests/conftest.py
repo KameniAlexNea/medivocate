@@ -9,14 +9,14 @@ if dotenv_path.exists():
 
 # Set defaults using values from .env
 os.environ.setdefault("GROQ_API_KEY", "")
-os.environ.setdefault("GROQ_MODEL_NAME", "llama")
-os.environ.setdefault("OLLAM_EMB", "mxbai")
+os.environ.setdefault("GROQ_MODEL_NAME", "llama-3.3-70b-versatile")
+os.environ.setdefault("OLLAM_EMB", "nomic-embed-text")
 os.environ.setdefault("OLLAMA_HOST", "http://localhost:11434/")
 os.environ.setdefault("OLLAMA_MODEL", "phi4")
 os.environ.setdefault("OLLAMA_TOKEN", "")
 os.environ.setdefault("USE_HF_EMBEDDING", "1")
 os.environ.setdefault("USE_OLLAMA_CHAT", "0")
-os.environ.setdefault("HF_MODEL", "nomic")
+os.environ.setdefault("HF_MODEL", "nomic-ai/nomic-embed-text-v2-moe")
 os.environ.setdefault("MAX_MESSAGES", "3")
 os.environ.setdefault("N_CONTEXT", "3")
 os.environ.setdefault("IS_APP", "0")
