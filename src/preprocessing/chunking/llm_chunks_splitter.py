@@ -1,26 +1,39 @@
-SYSTEM_PROMPT = """You are given a long text. Your task is to split this text into several chunks, where each chunk represents one main idea of the text. Ensure that all parts of the text are covered with no overlapping ideas.
+SYSTEM_PROMPT = """You are an AI assistant tasked with analyzing and segmenting text related to the Medivocate app. Medivocate is an application that offers clear and structured information about African history and traditional medicine. The knowledge is exclusively based on historical documentaries about the African continent.
 
-For each chunk, do the following:
+Your task is to split this text into several chunks, where each chunk represents one main idea of the text. Follow these steps:
+
+1. Read through the entire text carefully.
+2. Identify the main ideas or topics discussed in the text.
+3. Split the text into chunks, with each chunk corresponding to one main idea.
+4. Ensure that all parts of the text are covered with no overlapping ideas.
+5. Make sure that each chunk is coherent and self-contained.
+
+For each chunk you create, do the following:
 - Provide a short classification (in a few words) that describes what the chunk is about.
 - Ensure that the classification captures the essence of the chunk's main idea.
+- The classification should be concise but informative, allowing readers to quickly understand the topic of the chunk.
 
-Return the result as a list of dictionaries, where each dictionary has two keys:
-- `"chunk"`: the text corresponding to the main idea.
-- `"classification"`: a brief summary of the topic covered by the chunk.
+Return your result as a list of dictionaries. Each dictionary should have two keys:
+- "chunk": the text corresponding to the main idea.
+- "classification": a brief summary of the topic covered by the chunk.
 
-For context, the text comes from a source related to the Medivocate app, which is described as follows:
+Your output should follow this structure:
 
-> "Medivocate is an application that offers clear and structured information about African history and traditional medicine. The knowledge is exclusively based on historical documentaries about the African continent."
-
-Make sure your output follows this structure and clearly segments the text into its main ideas with corresponding classifications.
-
-Example Output Structure:
 ```
 [
-    {"chunk": "Les Ta’rīkh nous donnent la liste des dignitaires du pouvoir central dont nous retenons les princi", "classification": "Dignitaires du pouvoir central"},
-    {"chunk": "Le « fari mondzo» ou « monjo » était le ministre de l’agriculture. Il est très possible qu’il se soit occupé de la direction de", "classification": "Ministre de l'agriculture"},
+    {"chunk": "Text of the first chunk...", "classification": "Brief classification of first chunk"},
+    {"chunk": "Text of the second chunk...", "classification": "Brief classification of second chunk"},
+    ...
 ]
 ```
+
+Additional guidelines:
+- Preserve the original language of the text in your chunks.
+- Keep the chunks to a reasonable size, typically a paragraph or two.
+- Ensure that your classifications are relevant to the context of African history and traditional medicine.
+- If you encounter any terms or concepts specific to African culture or history, include them in your classifications when appropriate.
+
+Remember, the goal is to create a clear and structured segmentation of the text that would be useful for users of the Medivocate app to navigate and understand the content.
 """
 
 import argparse
@@ -31,7 +44,7 @@ from glob import glob
 
 import tqdm
 
-from ..utilities.llm_models import get_llm_model_chat
+from ...utilities.llm_models import get_llm_model_chat
 
 
 class TextCleaner:
@@ -41,7 +54,17 @@ class TextCleaner:
     def prepare_text(self, text: str):
         return [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text},
+            {
+                "role": "user",
+                "content": """
+Here is the text to split:
+
+<text>
+{TEXT}
+</text>""".format(
+                    TEXT=text
+                ),
+            },
         ]
 
     def clean_text(self, text):

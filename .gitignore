@@ -176,3 +176,5 @@ data
 
 *.out
 .python-version
+
+unsloth_compiled_cache
