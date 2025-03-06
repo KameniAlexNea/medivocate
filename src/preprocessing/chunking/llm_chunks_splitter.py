@@ -1,24 +1,4 @@
-SYSTEM_PROMPT = """You are an AI assistant tasked with analyzing and segmenting text related to the Medivocate app. Medivocate is an application that offers clear and structured information about African history and traditional medicine. The knowledge is exclusively based on historical documentaries about the African continent.
-
-Your task is to split this text into several chunks, where each chunk represents one main idea of the text. Follow these steps:
-
-1. Read through the entire text carefully.
-2. Identify the main ideas or topics discussed in the text.
-3. Split the text into chunks, with each chunk corresponding to one main idea.
-4. Ensure that all parts of the text are covered with no overlapping ideas.
-5. Make sure that each chunk is coherent and self-contained.
-
-For each chunk you create, do the following:
-- Provide a short classification (in a few words) that describes what the chunk is about.
-- Ensure that the classification captures the essence of the chunk's main idea.
-- The classification should be concise but informative, allowing readers to quickly understand the topic of the chunk.
-
-Return your result as a list of dictionaries. Each dictionary should have two keys:
-- "chunk": the text corresponding to the main idea.
-- "classification": a brief summary of the topic covered by the chunk.
-
-Your output should follow this structure:
-
+FORMAT_OUTPUT = """
 ```
 [
     {"chunk": "Text of the first chunk...", "classification": "Brief classification of first chunk"},
@@ -26,14 +6,49 @@ Your output should follow this structure:
     ...
 ]
 ```
+"""
+
+PARENT_SYSTEM = """You are an AI assistant tasked with analyzing and segmenting a given text into coherent chunks, each representing a main idea or topic. Your goal is to create a clear and structured segmentation of the text that helps readers navigate and understand the content, regardless of the subject."""
+
+USER_PROMPT = """Here is the text you need to analyze and segment:
+
+<text>
+{TEXT}
+</text>
+
+Follow these steps to complete the task:
+
+1. Read the entire text carefully to understand its content and structure.
+
+2. Identify the main ideas or key topics discussed in the text.
+
+3. Split the text into chunks, where each chunk corresponds to a single main idea. Aim for chunks that are typically one to two paragraphs long, ensuring they are neither too brief nor overly lengthy.
+
+4. For each chunk you create:
+   a. Provide a short classification (in a few words) summarizing what the chunk is about.
+   b. Ensure the classification reflects the chunk's main idea accurately.
+   c. Keep the classification concise and informative, allowing readers to quickly grasp the chunk's topic.
+
+5. Ensure that all parts of the text are included without overlapping ideas between chunks.
+
+6. Make sure each chunk is self-contained and makes sense independently.
+
+7. Return your result as a `list` of `dictionaries` (as in python language), each with two keys:
+   - "chunk": The text segment corresponding to the main idea.
+   - "classification": A brief summary of the topic covered by the chunk.
+
+The output should follow this structure:
+
+<output>
+{FORMAT_OUTPUT}
+</output>
 
 Additional guidelines:
-- Preserve the original language of the text in your chunks.
-- Keep the chunks to a reasonable size, typically a paragraph or two.
-- Ensure that your classifications are relevant to the context of African history and traditional medicine.
-- If you encounter any terms or concepts specific to African culture or history, include them in your classifications when appropriate.
+- Preserve the original language of the text within the chunks; do not alter the wording.
+- Ensure classifications are appropriate to the text's subject matter.
+- If the text includes terms or concepts unique to its subject, include them in the classifications when relevant.
 
-Remember, the goal is to create a clear and structured segmentation of the text that would be useful for users of the Medivocate app to navigate and understand the content.
+Remember, your objective is to create a clear and structured segmentation of the text that helps readers navigate and understand the content, regardless of the subject. Provide your answer in the specified JSON format inside <answer> tags.
 """
 
 import argparse
@@ -43,8 +58,24 @@ import time
 from glob import glob
 
 import tqdm
+from langchain_anthropic import ChatAnthropic
+from langchain_groq import ChatGroq
+from langchain_ollama import ChatOllama
 
-from ...utilities.llm_models import get_llm_model_chat
+
+def get_llm_model_chat(temperature=0.01, max_tokens: int = None):
+    return ChatAnthropic(model="claude-3-7-sonnet-20250219", max_tokens=30000)
+    if str(os.getenv("USE_OLLAMA_CHAT")) == "1":
+        return ChatOllama(
+            model=os.getenv("OLLAMA_MODEL"),
+            temperature=temperature,
+            num_predict=max_tokens,
+        )
+    return ChatGroq(
+        model=os.getenv("GROQ_MODEL_NAME"),
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
 
 
 class TextCleaner:
@@ -53,18 +84,8 @@ class TextCleaner:
 
     def prepare_text(self, text: str):
         return [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": """
-Here is the text to split:
-
-<text>
-{TEXT}
-</text>""".format(
-                    TEXT=text
-                ),
-            },
+            {"role": "system", "content": PARENT_SYSTEM},
+            {"role": "user", "content": USER_PROMPT.format(TEXT=text, FORMAT_OUTPUT=FORMAT_OUTPUT)},
         ]
 
     def clean_text(self, text):
@@ -93,11 +114,11 @@ Here is the text to split:
             cleaned = []
             try:
                 cleaned = self.clean_texts(raws)
-                time.sleep(1)
+                # time.sleep(1)
             except Exception:
-                time.sleep(1)
+                # time.sleep(1)
                 cleaned = self.clean_texts(raws)
-                time.sleep(1)
+                # time.sleep(1)
             for f, c in zip(batch, cleaned):
                 with open(
                     os.path.join(
