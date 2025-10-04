@@ -2,63 +2,49 @@ import logging
 import os
 from argparse import ArgumentParser
 from glob import glob
+from pathlib import Path
+from typing import Optional
 
 from tqdm import tqdm
 
-from .config.ocr_config import OCRConfig, PreprocessingConfig
-from .config.ocr_enum import OutputFormat
-from .core.ocr_base_engine import OCREngine
+from .config import OCRConfig
+from .ocr import OCRProcessor
+
+logging.basicConfig(level=logging.INFO)
 
 
-def process_document(file_path: str, output_format: OutputFormat, output_folder: str):
+def process_document(file_path: str, output_folder: str, config: Optional[OCRConfig] = None):
     """
     Process a document with OCR and save the result to the output folder.
 
     Args:
-        file_path (str): Path to the input PDF or image file.
-        output_format (OutputFormat): Desired output format (TEXT, JSON, XML).
-        output_folder (str): Destination folder for the output file.
+        file_path: Path to the input PDF file
+        output_folder: Destination folder for the output files
+        config: OCR configuration
     """
-    test_pdf_readable = len(glob(os.path.join(output_folder, "*.txt"))) > 2
-    if test_pdf_readable:
-        logging.info(f"Skipping {file_path} as it is already processed")
+    if not file_path.lower().endswith('.pdf'):
+        logging.warning(f"Skipping non-PDF file: {file_path}")
         return
-    logging.info(f"Processing {file_path}")
 
-    # Initialize configuration
-    config = OCRConfig(
-        dpi=300,
-        languages=["en"],  # Add more languages as needed
-        batch_size=4,
-        preprocessing=PreprocessingConfig(
-            denoise=True, deskew=True, contrast_enhancement=True
-        ),
-        output_format=output_format,
-    )
-
-    # Initialize components
-    ocr_engine = OCREngine(config)
+    config = config or OCRConfig()
+    processor = OCRProcessor(config)
 
     try:
         # Create output folder if it doesn't exist
         os.makedirs(output_folder, exist_ok=True)
-        # Process file
-        for pages, contents in ocr_engine.convert_pdf_to_data(
-            file_path, list(range(16))
-        ):
-            for page_num, result in zip(pages, contents):
-                # Prepare output file name and path
-                base_name = os.path.splitext(os.path.basename(file_path))[0]
-                extension = output_format.value.lower()
-                output_file_path = os.path.join(
-                    output_folder, f"{base_name}-page_{page_num:04d}.{extension}"
-                )
 
-                # Write results to file
-                with open(output_file_path, "w", encoding="utf-8") as output_file:
-                    output_file.write(result)
+        # Process PDF
+        results = processor.process_pdf(file_path)
 
-                logging.info(f"Output saved to: {output_file_path}")
+        # Save results
+        base_name = Path(file_path).stem
+        for page_num, text in results:
+            output_file_path = os.path.join(
+                output_folder, f"{base_name}-page_{page_num:04d}.txt"
+            )
+            with open(output_file_path, "w", encoding="utf-8") as output_file:
+                output_file.write(text)
+            logging.info(f"Output saved to: {output_file_path}")
 
     except Exception as e:
         logging.error(f"Error processing file '{file_path}': {str(e)}")
@@ -66,35 +52,44 @@ def process_document(file_path: str, output_format: OutputFormat, output_folder:
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="OCRize PDF Document")
+    parser = ArgumentParser(description="OCR PDF Document")
     parser.add_argument(
         "--pdf_path",
-        required=False,
+        required=True,
         type=str,
-        help="Path to the file or folder containing list of files",
+        help="Path to the PDF file or folder containing PDF files",
     )
     parser.add_argument(
-        "--output_type",
-        default="text",
-        required=False,  # output format is computed
+        "--output_folder",
+        required=True,
         type=str,
-        help="output format of OCR Document.",
+        help="Output folder for OCR results",
+    )
+    parser.add_argument(
+        "--languages",
+        nargs='+',
+        default=['en'],
+        help="Languages for OCR (default: en)",
+    )
+    parser.add_argument(
+        "--dpi",
+        type=int,
+        default=300,
+        help="DPI for PDF to image conversion (default: 300)",
     )
 
     args = parser.parse_args()
 
+    config = OCRConfig(languages=args.languages, dpi=args.dpi)
+
     if os.path.isfile(args.pdf_path):
-        output_folder = args.pdf_path.replace(".pdf", "")
-        os.makedirs(output_folder, exist_ok=True)
-        process_document(
-            args.pdf_path, OutputFormat[args.output_type.upper()], output_folder
-        )
+        process_document(args.pdf_path, args.output_folder, config)
     else:
-        files = glob(os.path.join(args.pdf_path, "*.pdf"))
-        assert len(files), "At least one file in the folder passed"
-        for file in tqdm(files):
-            output_folder = file.replace(".pdf", "")
-            os.makedirs(output_folder, exist_ok=True)
-            process_document(
-                file, OutputFormat[args.output_type.upper()], output_folder
-            )
+        pdf_files = glob(os.path.join(args.pdf_path, "*.pdf"))
+        if not pdf_files:
+            logging.error("No PDF files found in the specified folder")
+            exit(1)
+
+        for pdf_file in tqdm(pdf_files):
+            output_subfolder = os.path.join(args.output_folder, Path(pdf_file).stem)
+            process_document(pdf_file, output_subfolder, config)

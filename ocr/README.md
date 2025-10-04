@@ -1,11 +1,37 @@
-### Reader
+# OCR Package
 
-reader is a module to reader non-machine readable pdf or image file using ocr.
-The module is base on EasyOCR.
-Given an image, a list of pre-processing operation are
-apply to the image to collect information then return informations in json, txt or yaml forma.
-Given pdf file, reader convert it to image and apply the exact step list befor.
+A simple OCR package for extracting text from PDF files using EasyOCR.
 
-Run example
+## Features
 
-python -m src.ocr.main --input_file / folder --output_file / folde
+- Convert PDF pages to images
+- Apply basic image preprocessing (denoising, deskewing)
+- Extract text using EasyOCR
+- Support for multiple languages
+- Output text files per page
+
+## Usage
+
+### Command Line
+
+```bash
+python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output
+```
+
+### Python API
+
+```python
+from ocr import OCRConfig, OCRProcessor
+
+config = OCRConfig(languages=['en', 'fr'], dpi=300)
+processor = OCRProcessor(config)
+
+results = processor.process_pdf('document.pdf')
+for page_num, text in results:
+    print(f"Page {page_num}: {text}")
+```
+
+## Configuration
+
+- `languages`: List of language codes (default: ['en'])
+- `dpi`: DPI for PDF to image conversion (default: 300)
