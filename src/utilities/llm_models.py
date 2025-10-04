@@ -30,7 +30,9 @@ def get_llm_model_chat(temperature=0.01, max_tokens: int = None):
     if str(os.getenv("USE_OLLAMA_CHAT")) == "1":
         model = os.getenv("OLLAMA_MODEL")
         if not model:
-            raise ValueError("OLLAMA_MODEL environment variable must be set when USE_OLLAMA_CHAT=1")
+            raise ValueError(
+                "OLLAMA_MODEL environment variable must be set when USE_OLLAMA_CHAT=1"
+            )
         return ChatOllama(
             model=model,
             temperature=temperature,
@@ -65,7 +67,9 @@ def get_llm_model_embedding():
     # Default to Ollama embeddings
     model = os.getenv("OLLAM_EMB")
     if not model:
-        raise ValueError("OLLAM_EMB environment variable must be set for Ollama embeddings")
+        raise ValueError(
+            "OLLAM_EMB environment variable must be set for Ollama embeddings"
+        )
     return OllamaEmbeddings(
         model=model,
         base_url=(

@@ -8,7 +8,7 @@ logging.basicConfig(
 )
 
 # Main API
-from .config import RAGConfig, VectorStoreConfig, ChunkingConfig
+from .config import ChunkingConfig, RAGConfig, VectorStoreConfig
 from .factory import create_rag_system, create_vector_store_manager
 from .rag_pipeline.rag_system import RAGSystem
 from .vector_store.vector_store import VectorStoreManager
@@ -18,11 +18,9 @@ __all__ = [
     "RAGConfig",
     "VectorStoreConfig",
     "ChunkingConfig",
-
     # Main classes
     "RAGSystem",
     "VectorStoreManager",
-
     # Factory functions
     "create_rag_system",
     "create_vector_store_manager",

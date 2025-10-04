@@ -54,7 +54,6 @@ Remember, your objective is to create a clear and structured segmentation of the
 import argparse
 import json
 import os
-import time
 from glob import glob
 
 import tqdm
@@ -85,7 +84,10 @@ class TextCleaner:
     def prepare_text(self, text: str):
         return [
             {"role": "system", "content": PARENT_SYSTEM},
-            {"role": "user", "content": USER_PROMPT.format(TEXT=text, FORMAT_OUTPUT=FORMAT_OUTPUT)},
+            {
+                "role": "user",
+                "content": USER_PROMPT.format(TEXT=text, FORMAT_OUTPUT=FORMAT_OUTPUT),
+            },
         ]
 
     def clean_text(self, text):

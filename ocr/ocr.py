@@ -20,11 +20,14 @@ class OCRProcessor:
     def _check_gpu() -> bool:
         try:
             import torch
+
             return torch.cuda.is_available()
         except ImportError:
             return False
 
-    def process_pdf(self, pdf_path: str, pages: Optional[List[int]] = None) -> List[tuple]:
+    def process_pdf(
+        self, pdf_path: str, pages: Optional[List[int]] = None
+    ) -> List[tuple]:
         """Process PDF file and extract text from pages.
 
         Args:
@@ -42,7 +45,7 @@ class OCRProcessor:
             ocr_results = self.reader.readtext(processed)
 
             # Extract text from results
-            text = ' '.join([result[1] for result in ocr_results if result[1].strip()])
+            text = " ".join([result[1] for result in ocr_results if result[1].strip()])
             results.append((page_num, text))
 
         return results
@@ -64,4 +67,4 @@ class OCRProcessor:
         processed = preprocess_image(image)
         ocr_results = self.reader.readtext(processed)
 
-        return ' '.join([result[1] for result in ocr_results if result[1].strip()])
+        return " ".join([result[1] for result in ocr_results if result[1].strip()])

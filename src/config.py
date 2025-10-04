@@ -4,6 +4,7 @@ This module provides centralized configuration classes for all components
 of the RAG (Retrieval-Augmented Generation) system, allowing for easy
 customization through environment variables or direct instantiation.
 """
+
 import os
 from dataclasses import dataclass
 from typing import Optional

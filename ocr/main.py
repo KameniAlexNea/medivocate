@@ -13,7 +13,9 @@ from .ocr import OCRProcessor
 logging.basicConfig(level=logging.INFO)
 
 
-def process_document(file_path: str, output_folder: str, config: Optional[OCRConfig] = None):
+def process_document(
+    file_path: str, output_folder: str, config: Optional[OCRConfig] = None
+):
     """
     Process a document with OCR and save the result to the output folder.
 
@@ -22,7 +24,7 @@ def process_document(file_path: str, output_folder: str, config: Optional[OCRCon
         output_folder: Destination folder for the output files
         config: OCR configuration
     """
-    if not file_path.lower().endswith('.pdf'):
+    if not file_path.lower().endswith(".pdf"):
         logging.warning(f"Skipping non-PDF file: {file_path}")
         return
 
@@ -67,8 +69,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--languages",
-        nargs='+',
-        default=['en'],
+        nargs="+",
+        default=["en"],
         help="Languages for OCR (default: en)",
     )
     parser.add_argument(

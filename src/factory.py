@@ -1,4 +1,5 @@
 """Factory functions for creating RAG system components."""
+
 from typing import Optional
 
 from .config import RAGConfig
@@ -7,8 +8,7 @@ from .vector_store.vector_store import VectorStoreManager
 
 
 def create_rag_system(
-    config: Optional[RAGConfig] = None,
-    auto_initialize: bool = False
+    config: Optional[RAGConfig] = None, auto_initialize: bool = False
 ) -> RAGSystem:
     """Create and optionally initialize a RAG system.
 
@@ -30,8 +30,7 @@ def create_rag_system(
 
 
 def create_vector_store_manager(
-    persist_directory: str,
-    batch_size: int = 64
+    persist_directory: str, batch_size: int = 64
 ) -> VectorStoreManager:
     """Create a vector store manager instance.
 

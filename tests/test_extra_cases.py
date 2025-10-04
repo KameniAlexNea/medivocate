@@ -1,10 +1,6 @@
 from src.utilities.llm_models import get_llm_model_embedding
 
 
-
-# ---------- Tests for LLM Models ----------
-
-
 def test_get_llm_model_embedding(monkeypatch):
     # Set the flag to use HF embedding; if not, defaults are used.
     monkeypatch.setenv("USE_HF_EMBEDDING", "1")

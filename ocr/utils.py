@@ -1,6 +1,5 @@
 import io
 import logging
-from pathlib import Path
 from typing import List, Optional
 
 import cv2
@@ -11,7 +10,9 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
-def pdf_to_images(pdf_path: str, dpi: int = 300, pages: Optional[List[int]] = None) -> List[tuple]:
+def pdf_to_images(
+    pdf_path: str, dpi: int = 300, pages: Optional[List[int]] = None
+) -> List[tuple]:
     """Convert PDF pages to images.
 
     Args:
@@ -73,7 +74,11 @@ def preprocess_image(image: np.ndarray) -> np.ndarray:
             center = (w // 2, h // 2)
             M = cv2.getRotationMatrix2D(center, median_angle, 1.0)
             denoised = cv2.warpAffine(
-                denoised, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
+                denoised,
+                M,
+                (w, h),
+                flags=cv2.INTER_CUBIC,
+                borderMode=cv2.BORDER_REPLICATE,
             )
 
     return denoised

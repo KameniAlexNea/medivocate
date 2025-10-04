@@ -59,19 +59,22 @@ class RAGSystem:
     def _get_llm(self):
         """Get the language model with configured parameters."""
         return get_llm_model_chat(
-            temperature=self.config.temperature,
-            max_tokens=self.config.max_tokens
+            temperature=self.config.temperature, max_tokens=self.config.max_tokens
         )
 
     def load_documents(self) -> List[Document]:
         """Load and split documents from the specified directory"""
         try:
-            return self.vector_store_management.load_and_process_documents(self.docs_dir)
+            return self.vector_store_management.load_and_process_documents(
+                self.docs_dir
+            )
         except Exception as e:
             logging.error(f"Failed to load documents from {self.docs_dir}: {e}")
             raise
 
-    def initialize_vector_store(self, documents: Optional[List[Document]] = None) -> None:
+    def initialize_vector_store(
+        self, documents: Optional[List[Document]] = None
+    ) -> None:
         """Initialize or load the vector store"""
         try:
             self.vector_store_management.initialize_vector_store(documents)
@@ -86,14 +89,18 @@ class RAGSystem:
 
         try:
             retriever = self.vector_store_management.create_retriever(
-                self.llm, self.config.top_k_documents, bm25_portion=self.config.bm25_portion
+                self.llm,
+                self.config.top_k_documents,
+                bm25_portion=self.config.bm25_portion,
             )
 
             # Contextualize question
             self.history_aware_retriever = create_history_aware_retriever(
                 self.llm, retriever, CONTEXTUEL_QUERY_PROMPT
             )
-            self.question_answer_chain = create_stuff_documents_chain(self.llm, CHAT_PROMPT)
+            self.question_answer_chain = create_stuff_documents_chain(
+                self.llm, CHAT_PROMPT
+            )
             self.chain = create_retrieval_chain(
                 self.history_aware_retriever, self.question_answer_chain
             )
@@ -103,7 +110,9 @@ class RAGSystem:
             logging.error(f"Failed to setup RAG chain: {e}")
             raise
 
-    def query(self, question: str, history: Optional[List[str]] = None) -> Generator[str, None, None]:
+    def query(
+        self, question: str, history: Optional[List[str]] = None
+    ) -> Generator[str, None, None]:
         """Query the RAG system with streaming response.
 
         Args:
@@ -125,7 +134,9 @@ class RAGSystem:
 
             self.setup_rag_chain()
 
-            for token in self.chain.stream({"input": question, "chat_history": history}):
+            for token in self.chain.stream(
+                {"input": question, "chat_history": history}
+            ):
                 if "answer" in token:
                     yield token["answer"]
         except Exception as e:
@@ -171,4 +182,4 @@ if __name__ == "__main__":
         print("Answer:")
         for chunk in rag.query(question=query):
             print(chunk, end="")
-        print("\n" + "="*50 + "\n")
+        print("\n" + "=" * 50 + "\n")

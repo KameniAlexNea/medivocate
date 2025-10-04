@@ -7,7 +7,6 @@ from src.preprocessing.chunking.chunk import (
     ChunkingManager,
     retrieve_documents_from_folder,
 )
-from src.preprocessing.processor import Processor
 from src.utilities.load_data import download_and_prepare_data
 
 # ---------- Additional Tests for load_data ----------

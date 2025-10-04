@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 from langchain.retrievers import MultiQueryRetriever
@@ -25,7 +24,9 @@ class VectorStoreManager:
             persist_directory (str): Directory to persist the vector store.
             batch_size (int): Number of documents to process in each batch.
         """
-        config = VectorStoreConfig(persist_directory=persist_directory, batch_size=batch_size)
+        config = VectorStoreConfig(
+            persist_directory=persist_directory, batch_size=batch_size
+        )
         self.persist_directory = config.persist_directory
         self.batch_size = config.batch_size
         self.embeddings = get_llm_model_embedding()
