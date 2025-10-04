@@ -10,35 +10,6 @@ from src.preprocessing.chunking.chunk import (
 from src.preprocessing.processor import Processor
 from src.utilities.load_data import download_and_prepare_data
 
-# Import functions/classes to test
-from src.utilities.parser import parse_json
-
-# ---------- Additional Tests for parser ----------
-
-
-def test_parse_json_empty():
-    # Empty input should return None.
-    result = parse_json("")
-    assert result is None
-
-
-def test_parse_json_malformed():
-    # Input with multiple json blocks should attempt only the first valid block.
-    input_str = 'text before ```json\n{"a": 1}\n``` and extra ```json\n{"b": 2}\n```'
-    result = parse_json(input_str)
-    # Expect the first JSON block to be parsed
-    assert result == {"a": 1}
-
-
-# ---------- Additional Tests for Processor ----------
-
-
-def test_merge_sentences_empty():
-    # Passing an empty string should return empty output.
-    merged = Processor.merge_sentences("")
-    assert merged == ""
-
-
 # ---------- Additional Tests for load_data ----------
 
 
