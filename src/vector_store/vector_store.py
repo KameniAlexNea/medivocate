@@ -6,22 +6,10 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from tqdm import tqdm
 
+from ..config import VectorStoreConfig
 from ..utilities.llm_models import get_llm_model_embedding
 from .document_loader import DocumentLoader
 from .prompts import DEFAULT_QUERY_PROMPT
-
-
-def get_collection_name() -> str:
-    """
-    Derives the collection name from an environment variable.
-
-    Returns:
-        str: Processed collection name.
-    """
-    return (
-        "medivocate-"
-        + os.getenv("HF_MODEL", "default_model").split(":")[0].split("/")[-1]
-    )
 
 
 class VectorStoreManager:
@@ -37,10 +25,11 @@ class VectorStoreManager:
             persist_directory (str): Directory to persist the vector store.
             batch_size (int): Number of documents to process in each batch.
         """
-        self.persist_directory = persist_directory
-        self.batch_size = batch_size
+        config = VectorStoreConfig(persist_directory=persist_directory, batch_size=batch_size)
+        self.persist_directory = config.persist_directory
+        self.batch_size = config.batch_size
         self.embeddings = get_llm_model_embedding()
-        self.collection_name = get_collection_name()
+        self.collection_name = config.collection_name
         self.vector_stores: dict[str, Chroma] = {"chroma": None}
         self.vs_initialized = False
 

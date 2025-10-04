@@ -4,6 +4,8 @@ import string
 import tiktoken
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+from ..config import ChunkingConfig
+
 
 class Processor:
     def __init__(self, chunk_size=512, chunk_overlap=75):
@@ -13,6 +15,11 @@ class Processor:
             chunk_overlap=chunk_overlap,
             length_function=lambda x: len(encoding.encode(x)),
         )
+
+    @classmethod
+    def from_config(cls, config: ChunkingConfig) -> "Processor":
+        """Create a Processor instance from configuration."""
+        return cls(chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap)
 
     @staticmethod
     def merge_sentences(text: str) -> str:

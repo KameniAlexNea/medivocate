@@ -14,6 +14,7 @@ from langchain_ollama import ChatOllama
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
+from ...config import ChunkingConfig
 from ...utilities.llm_models import get_llm_model_chat
 from ..processor import Processor
 from .llm_model import LLMCategory, LLMClean, LLMKeyWord, LLMSummary
@@ -23,16 +24,10 @@ class ChunkingManager:
     def __init__(
         self,
         llm: ChatOllama,
-        chunk_size=512,
-        chunk_overlap=75,
-        top_n=3,
-        keyphrase_ngram_range=(1, 1),
+        config: ChunkingConfig = None,
     ):
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+        self.config = config or ChunkingConfig()
         self.llm = llm
-        self.top_n = top_n
-        self.keyphrase_ngram_range = keyphrase_ngram_range
         self.kwb = KeyBERT(
             SentenceTransformer(
                 "all-mpnet-base-v2",
@@ -44,7 +39,7 @@ class ChunkingManager:
         self.llm_clean = LLMClean(llm)
         self.llm_keyword = LLMKeyWord(llm)
         self.llm_category = LLMCategory(llm)
-        self.processor = Processor(chunk_size, chunk_overlap)
+        self.processor = Processor.from_config(self.config)
 
     def clean_text(self, text):
         return self.llm_clean.process(text)
@@ -58,8 +53,8 @@ class ChunkingManager:
 
         keywords = self.kwb.extract_keywords(
             paragraphs,
-            top_n=self.top_n,
-            keyphrase_ngram_range=self.keyphrase_ngram_range,
+            top_n=self.config.keyphrase_top_n,
+            keyphrase_ngram_range=self.config.keyphrase_ngram_range,
         )
         if isinstance(keywords[0], tuple):
             keywords = [keywords]

@@ -5,7 +5,7 @@ from typing import List
 
 import gradio as gr
 
-from src.rag_pipeline.rag_system import RAGSystem
+from src import create_rag_system, RAGConfig, RAGSystem
 from src.utilities.load_data import download_and_prepare_data
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -49,7 +49,9 @@ if __name__ == "__main__":
     download_and_prepare_data(gdrive_url, zip_filename, extract_to, target_folder)
 
     top_k_docs = int(os.getenv("N_CONTEXT") or 4)
-    rag_system = RAGSystem(top_k_documents=top_k_docs)
+    config = RAGConfig.from_env()
+    config.top_k_documents = top_k_docs
+    rag_system = create_rag_system(config)
     rag_system.initialize_vector_store()
 
     chat_interface = ChatInterface(rag_system)
