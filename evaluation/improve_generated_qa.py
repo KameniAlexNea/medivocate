@@ -3,7 +3,6 @@ python -m src.llm_evaluation.improve_generated_qa --input_folder data/evaluation
 """
 
 import argparse
-import glob
 import json
 import os
 import re
@@ -50,7 +49,7 @@ def parse_questions_answers_with_regex(folder_path):
         list of tuples: Each tuple contains a question and its corresponding answer.
     """
     # List all text files in the folder
-    files = glob.glob(os.path.join(folder_path, "*.txt"))
+    files = glob(os.path.join(folder_path, "*.txt"))
     qa_list = []
 
     for file in files:
