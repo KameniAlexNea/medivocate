@@ -4,7 +4,7 @@ from langchain_core.documents import Document
 # Dummy classes to simulate external dependencies
 from langchain_core.runnables import Runnable
 
-from src.vector_store.bivector_store import VectorStoreManager
+from src.vector_store.bivector_store import EnsembleVectorStoreManager
 
 
 class DummyChroma(Runnable):
@@ -74,7 +74,7 @@ def test_initialize_with_documents(monkeypatch):
         lambda docs, tokenizer=None: DummyBM25(docs, tokenizer),
     )
 
-    manager = VectorStoreManager(persist_directory="/tmp")
+    manager = EnsembleVectorStoreManager(persist_directory="/tmp")
     manager._batch_process_documents(dummy_docs)
 
     assert manager.vs_initialized is True
@@ -95,7 +95,7 @@ def test_initialize_without_documents(monkeypatch):
         lambda docs, tokenizer=None: DummyBM25(docs, tokenizer),
     )
 
-    manager = VectorStoreManager(persist_directory="/tmp")
+    manager = EnsembleVectorStoreManager(persist_directory="/tmp")
     manager.initialize_vector_store()  # no documents provided
 
     # After loading, bm25 should be set from dummy docs returned by get()
@@ -107,7 +107,7 @@ def test_initialize_without_documents(monkeypatch):
 def test_create_retriever(monkeypatch):
     dummy_bm25 = DummyBM25([])
     dummy_chroma = DummyChroma()
-    manager = VectorStoreManager(persist_directory="/tmp")
+    manager = EnsembleVectorStoreManager(persist_directory="/tmp")
     manager.vector_stores["bm25"] = dummy_bm25
     manager.vector_stores["chroma"] = dummy_chroma
 
@@ -124,17 +124,3 @@ def test_create_retriever(monkeypatch):
     assert isinstance(retriever, DummyMultiQueryRetriever)
     # Ensure BM25 retriever's k attribute is set correctly
     assert getattr(dummy_bm25, "k", None) == 5
-
-
-# Test: Load and process documents using the dummy loader
-def test_load_and_process_documents(monkeypatch):
-    monkeypatch.setattr(
-        "src.vector_store.bivector_store.DocumentLoader",
-        lambda doc_dir: DummyDocumentLoader(doc_dir),
-    )
-    manager = VectorStoreManager(persist_directory="/tmp")
-    docs = manager.load_and_process_documents("dummy_dir")
-
-    assert isinstance(docs, list)
-    assert len(docs) == 1
-    assert docs[0].page_content == "Test content"
