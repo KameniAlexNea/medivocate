@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 from typing import Generator, List, Optional
 
@@ -69,7 +69,7 @@ class RAGSystem:
                 self.docs_dir
             )
         except Exception as e:
-            logging.error(f"Failed to load documents from {self.docs_dir}: {e}")
+            logger.error(f"Failed to load documents from {self.docs_dir}: {e}")
             raise
 
     def initialize_vector_store(
@@ -79,7 +79,7 @@ class RAGSystem:
         try:
             self.vector_store_management.initialize_vector_store(documents)
         except Exception as e:
-            logging.error(f"Failed to initialize vector store: {e}")
+            logger.error(f"Failed to initialize vector store: {e}")
             raise
 
     def setup_rag_chain(self) -> BaseConversationalRetrievalChain:
@@ -104,10 +104,10 @@ class RAGSystem:
             self.chain = create_retrieval_chain(
                 self.history_aware_retriever, self.question_answer_chain
             )
-            logging.info("RAG chain setup complete")
+            logger.info("RAG chain setup complete")
             return self.chain
         except Exception as e:
-            logging.error(f"Failed to setup RAG chain: {e}")
+            logger.error(f"Failed to setup RAG chain: {e}")
             raise
 
     def query(
@@ -140,7 +140,7 @@ class RAGSystem:
                 if "answer" in token:
                     yield token["answer"]
         except Exception as e:
-            logging.error(f"Failed to query RAG system: {e}")
+            logger.error(f"Failed to query RAG system: {e}")
             raise
 
     def query_complex(self, question: str, verbose: bool = False) -> None:

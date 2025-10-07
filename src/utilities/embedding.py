@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 from typing import Any, List
 
@@ -80,7 +80,7 @@ class CustomEmbedding(BaseModel, Embeddings):
                 else embed
             )
         except Exception as e:
-            logging.warning(f"Issue with batch hosted embedding, moving to CPU: {e}")
+            logger.warning(f"Issue with batch hosted embedding, moving to CPU: {e}")
 
     def embed_query(self, text: str) -> List[float]:
         """
@@ -93,8 +93,8 @@ class CustomEmbedding(BaseModel, Embeddings):
             List[float]: The embedded query vector.
         """
         try:
-            logging.info(text)
+            logger.info(text)
             embed = self.cpu_embedding.embed_query(text)
             return embed[: self.matryoshka_dim] if self.matryoshka_dim else embed
         except Exception as e:
-            logging.warning(f"Issue with hosted embedding, moving to CPU: {e}")
+            logger.warning(f"Issue with hosted embedding, moving to CPU: {e}")

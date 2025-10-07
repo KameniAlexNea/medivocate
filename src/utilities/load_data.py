@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 import shutil
 import subprocess
@@ -16,31 +16,31 @@ def download_and_prepare_data(gdrive_url, zip_filename, extract_to, target_folde
     """
     try:
         if os.path.exists(os.path.join(target_folder, "chroma.sqlite3")):
-            logging.info(f"Data already exists in {target_folder}")
+            logger.info(f"Data already exists in {target_folder}")
             return
         # Step 1: Download the file using gdown
-        logging.info("Downloading file...")
+        logger.info("Downloading file...")
         subprocess.run(["gdown", gdrive_url, "-O", zip_filename], check=True)
 
         # Step 2: Unzip the downloaded file
-        logging.info("Unzipping file...")
+        logger.info("Unzipping file...")
         with zipfile.ZipFile(zip_filename, "r") as zip_ref:
             zip_ref.extractall(extract_to)
 
         # Step 3: Remove old data folder if it exists
         if os.path.exists(target_folder):
-            logging.info(f"Removing existing folder: {target_folder}")
+            logger.info(f"Removing existing folder: {target_folder}")
             shutil.rmtree(target_folder)
 
         # Step 4: Move the extracted folder to the target location
-        logging.info(f"Moving extracted data to {target_folder}")
+        logger.info(f"Moving extracted data to {target_folder}")
         extracted_folder = os.path.join(extract_to, os.path.basename(target_folder))
         shutil.move(extracted_folder, target_folder)
 
         # Step 5: Remove the downloaded zip file
-        logging.info(f"Cleaning up, removing zip file: {zip_filename}")
+        logger.info(f"Cleaning up, removing zip file: {zip_filename}")
         os.remove(zip_filename)
 
-        logging.info("Data preparation completed successfully!")
+        logger.info("Data preparation completed successfully!")
     except Exception as e:
-        logging.info(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")

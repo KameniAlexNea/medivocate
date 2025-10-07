@@ -1,10 +1,11 @@
 """Medivocate RAG System - A Retrieval-Augmented Generation system for document Q&A."""
 
-import logging
+from loguru import logger
 
-logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+logger.add(
+    lambda msg: print(msg, end=""),
+    level="WARNING",
+    format="{time:YYYY-MM-DD HH:mm:ss} - {name} - {level} - {message}",
 )
 
 # Main API
