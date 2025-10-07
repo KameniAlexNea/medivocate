@@ -18,7 +18,9 @@ class ChatInterface:
 
     def respond(self, message: str, history: List[List[str]]):
         result = ""
-        history = [(turn["role"], turn["content"]) for turn in history[-self.history_depth:]]
+        history = [
+            (turn["role"], turn["content"]) for turn in history[-self.history_depth :]
+        ]
         for text in self.rag_system.query(message, history):
             result += text
             yield result
