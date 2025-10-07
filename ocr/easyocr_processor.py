@@ -8,7 +8,7 @@ from .config import OCRConfig
 from .utils import pdf_to_images, preprocess_image
 
 
-class OCRProcessor:
+class EasyOCRProcessor:
     """Simple OCR processor for PDFs and images."""
 
     def __init__(self, config: Optional[OCRConfig] = None):

@@ -8,8 +8,8 @@ from loguru import logger
 from tqdm import tqdm
 
 from .config import OCRConfig
-from .ocr import OCRProcessor
 from .docling_processor import DoclingOCRProcessor
+from .easyocr_processor import EasyOCRProcessor
 
 
 def process_document(
@@ -31,7 +31,7 @@ def process_document(
     if config.engine == "docling":
         processor = DoclingOCRProcessor(config)
     else:
-        processor = OCRProcessor(config)
+        processor = EasyOCRProcessor(config)
 
     try:
         # Create output folder if it doesn't exist
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--languages",
         nargs="+",
-        default=["en"],
+        default=["en", "fr"],
         help="Languages for OCR (default: en)",
     )
     parser.add_argument(
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         languages=args.languages,
         dpi=args.dpi,
         engine=args.engine,
-        docling_format=args.docling_format
+        docling_format=args.docling_format,
     )
 
     if os.path.isfile(args.pdf_path):

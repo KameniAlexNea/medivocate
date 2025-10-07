@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Optional
 
 from docling.document_converter import DocumentConverter
@@ -35,6 +34,7 @@ class DoclingOCRProcessor:
             full_text = result.document.export_to_dict()
             # Convert dict to string representation
             import json
+
             full_text = json.dumps(full_text, indent=2, ensure_ascii=False)
         else:  # text
             full_text = result.document.export_to_text()
@@ -59,6 +59,9 @@ class DoclingOCRProcessor:
             return result.document.export_to_markdown()
         elif self.config.docling_format == "json":
             import json
-            return json.dumps(result.document.export_to_dict(), indent=2, ensure_ascii=False)
+
+            return json.dumps(
+                result.document.export_to_dict(), indent=2, ensure_ascii=False
+            )
         else:  # text
             return result.document.export_to_text()

@@ -27,11 +27,11 @@ python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/out
 ### Python API
 
 ```python
-from ocr import OCRConfig, OCRProcessor, DoclingOCRProcessor
+from ocr import OCRConfig, EasyOCRProcessor, DoclingOCRProcessor
 
 # Using EasyOCR
 config = OCRConfig(languages=['en', 'fr'], dpi=300, engine='easyocr')
-processor = OCRProcessor(config)
+processor = EasyOCRProcessor(config)
 
 results = processor.process_pdf('document.pdf')
 for page_num, text in results:
