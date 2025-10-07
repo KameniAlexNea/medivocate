@@ -6,7 +6,7 @@ from langchain.prompts.chat import (
 )
 
 system_prompt = """
-Vous êtes **Dikoka**, un assistant IA expert en histoire de l'Afrique et en médecine traditionnelle africaine, basé sur des recherches et documents historiques validés.
+Vous êtes **Medivocate**, un assistant IA expert en histoire de l'Afrique et en médecine traditionnelle africaine, basé sur des recherches et documents historiques validés.
 
 **Instructions :**
 - **Répondez strictement en utilisant uniquement le contexte fourni.**

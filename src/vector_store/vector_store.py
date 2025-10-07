@@ -3,15 +3,14 @@ from typing import List
 from langchain.retrievers import MultiQueryRetriever
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from tqdm import tqdm
 
 from ..config import VectorStoreConfig
-from ..utilities.llm_models import get_llm_model_embedding
+from .base_vector_store import BaseVectorStoreManager
 from .document_loader import DocumentLoader
 from .prompts import DEFAULT_QUERY_PROMPT
 
 
-class VectorStoreManager:
+class VectorStoreManager(BaseVectorStoreManager):
     """
     Manages vector store initialization, updates, and retrieval.
     """
@@ -24,37 +23,31 @@ class VectorStoreManager:
             persist_directory (str): Directory to persist the vector store.
             batch_size (int): Number of documents to process in each batch.
         """
-        config = VectorStoreConfig(
-            persist_directory=persist_directory, batch_size=batch_size
-        )
-        self.persist_directory = config.persist_directory
-        self.batch_size = config.batch_size
-        self.embeddings = get_llm_model_embedding()
-        self.collection_name = config.collection_name
+        super().__init__(persist_directory, batch_size)
         self.vector_stores: dict[str, Chroma] = {"chroma": None}
-        self.vs_initialized = False
 
-    def _batch_process_documents(self, documents: List[Document]):
+    def _initialize_chroma_store(self, documents: List[Document]):
         """
-        Processes documents in batches for vector store initialization.
+        Initialize Chroma vector store with first batch.
 
         Args:
-            documents (List[Document]): List of documents to process.
+            documents (List[Document]): First batch of documents.
         """
-        for i in tqdm(
-            range(0, len(documents), self.batch_size), desc="Processing documents"
-        ):
-            batch = documents[i : i + self.batch_size]
-            if not self.vs_initialized:
-                self.vector_stores["chroma"] = Chroma.from_documents(
-                    collection_name=self.collection_name,
-                    documents=batch,
-                    embedding=self.embeddings,
-                    persist_directory=self.persist_directory,
-                )
-                self.vs_initialized = True
-            else:
-                self.vector_stores["chroma"].add_documents(batch)
+        self.vector_stores["chroma"] = Chroma.from_documents(
+            collection_name=self.collection_name,
+            documents=documents,
+            embedding=self.embeddings,
+            persist_directory=self.persist_directory,
+        )
+
+    def _add_chroma_documents(self, documents: List[Document]):
+        """
+        Add documents to existing Chroma vector store.
+
+        Args:
+            documents (List[Document]): Documents to add.
+        """
+        self.vector_stores["chroma"].add_documents(documents)
 
     def initialize_vector_store(self, documents: List[Document] = None):
         """
@@ -64,7 +57,7 @@ class VectorStoreManager:
             documents (List[Document], optional): List of documents to initialize the vector store with.
         """
         if documents:
-            self._batch_process_documents(documents)
+            self._batch_process_chroma_documents(documents)
         else:
             self.vector_stores["chroma"] = Chroma(
                 collection_name=self.collection_name,

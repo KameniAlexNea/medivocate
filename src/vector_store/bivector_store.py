@@ -5,15 +5,14 @@ from langchain.retrievers import EnsembleRetriever, MultiQueryRetriever
 from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
-from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from ..config import VectorStoreConfig
-from ..utilities.llm_models import get_llm_model_embedding
+from .base_vector_store import BaseVectorStoreManager
 from .prompts import DEFAULT_QUERY_PROMPT
 
 
-class EnsembleVectorStoreManager:
+class EnsembleVectorStoreManager(BaseVectorStoreManager):
     """
     Manages ensemble vector store (Chroma + BM25) initialization, updates, and retrieval.
     """
@@ -26,13 +25,7 @@ class EnsembleVectorStoreManager:
             persist_directory (str): Directory to persist the vector store.
             batch_size (int): Number of documents to process in each batch.
         """
-        config = VectorStoreConfig(
-            persist_directory=persist_directory, batch_size=batch_size
-        )
-        self.persist_directory = config.persist_directory
-        self.batch_size = config.batch_size
-        self.embeddings = get_llm_model_embedding()
-        self.collection_name = config.collection_name
+        super().__init__(persist_directory, batch_size)
         self.vector_stores: dict[str, Union[Chroma, BM25Retriever]] = {
             "chroma": None,
             "bm25": None,
@@ -40,32 +33,43 @@ class EnsembleVectorStoreManager:
         self.tokenizer = AutoTokenizer.from_pretrained(
             os.getenv("HF_MODEL", "meta-llama/Llama-3.2-1B")
         )
-        self.vs_initialized = False
         self.vector_store = None
+
+    def _initialize_chroma_store(self, documents: List[Document]):
+        """
+        Initialize Chroma vector store with first batch.
+
+        Args:
+            documents (List[Document]): First batch of documents.
+        """
+        self.vector_stores["chroma"] = Chroma.from_documents(
+            collection_name=self.collection_name,
+            documents=documents,
+            embedding=self.embeddings,
+            persist_directory=self.persist_directory,
+        )
+
+    def _add_chroma_documents(self, documents: List[Document]):
+        """
+        Add documents to existing Chroma vector store.
+
+        Args:
+            documents (List[Document]): Documents to add.
+        """
+        self.vector_stores["chroma"].add_documents(documents)
 
     def _batch_process_documents(self, documents: List[Document]):
         """
         Processes documents in batches for vector store initialization.
+        Overrides base class to also initialize BM25 after Chroma processing.
 
         Args:
             documents (List[Document]): List of documents to process.
         """
-        for i in tqdm(
-            range(0, len(documents), self.batch_size), desc="Processing documents"
-        ):
-            batch = documents[i : i + self.batch_size]
+        # Process Chroma documents using parent method
+        self._batch_process_chroma_documents(documents)
 
-            if not self.vs_initialized:
-                self.vector_stores["chroma"] = Chroma.from_documents(
-                    collection_name=self.collection_name,
-                    documents=batch,
-                    embedding=self.embeddings,
-                    persist_directory=self.persist_directory,
-                )
-                self.vs_initialized = True
-            else:
-                self.vector_stores["chroma"].add_documents(batch)
-
+        # Initialize BM25 with all documents
         self.vector_stores["bm25"] = BM25Retriever.from_documents(
             documents, tokenizer=self.tokenizer
         )
@@ -96,7 +100,9 @@ class EnsembleVectorStoreManager:
                     all_documents["metadatas"],
                 )
             ]
-            self.vector_stores["bm25"] = BM25Retriever.from_documents(documents)
+            self.vector_stores["bm25"] = BM25Retriever.from_documents(
+                documents, tokenizer=self.tokenizer
+            )
         self.vs_initialized = True
 
     def create_retriever(
