@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from .config import OCRConfig
 from .ocr import OCRProcessor
+from .docling_processor import DoclingOCRProcessor
 
 
 def process_document(
@@ -27,7 +28,10 @@ def process_document(
         return
 
     config = config or OCRConfig()
-    processor = OCRProcessor(config)
+    if config.engine == "docling":
+        processor = DoclingOCRProcessor(config)
+    else:
+        processor = OCRProcessor(config)
 
     try:
         # Create output folder if it doesn't exist
@@ -77,10 +81,27 @@ if __name__ == "__main__":
         default=300,
         help="DPI for PDF to image conversion (default: 300)",
     )
+    parser.add_argument(
+        "--engine",
+        choices=["easyocr", "docling"],
+        default="easyocr",
+        help="OCR engine to use (default: easyocr)",
+    )
+    parser.add_argument(
+        "--docling_format",
+        choices=["markdown", "json", "text"],
+        default="markdown",
+        help="Output format for Docling (default: markdown)",
+    )
 
     args = parser.parse_args()
 
-    config = OCRConfig(languages=args.languages, dpi=args.dpi)
+    config = OCRConfig(
+        languages=args.languages,
+        dpi=args.dpi,
+        engine=args.engine,
+        docling_format=args.docling_format
+    )
 
     if os.path.isfile(args.pdf_path):
         process_document(args.pdf_path, args.output_folder, config)

@@ -1,13 +1,15 @@
 # OCR Package
 
-A simple OCR package for extracting text from PDF files using EasyOCR.
+A flexible OCR package for extracting text from PDF files and images using multiple engines.
 
 ## Features
 
-- Convert PDF pages to images
-- Apply basic image preprocessing (denoising, deskewing)
-- Extract text using EasyOCR
-- Support for multiple languages
+- Support for multiple OCR engines: EasyOCR and Docling
+- Convert PDF pages to images (EasyOCR)
+- Apply basic image preprocessing (denoising, deskewing) for EasyOCR
+- Extract text using EasyOCR or Docling
+- Support for multiple languages (EasyOCR)
+- Multiple output formats (Docling)
 - Output text files per page
 
 ## Usage
@@ -15,16 +17,29 @@ A simple OCR package for extracting text from PDF files using EasyOCR.
 ### Command Line
 
 ```bash
+# Using EasyOCR (default)
 python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output
+
+# Using Docling
+python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output --engine docling --docling_format markdown
 ```
 
 ### Python API
 
 ```python
-from ocr import OCRConfig, OCRProcessor
+from ocr import OCRConfig, OCRProcessor, DoclingOCRProcessor
 
-config = OCRConfig(languages=['en', 'fr'], dpi=300)
+# Using EasyOCR
+config = OCRConfig(languages=['en', 'fr'], dpi=300, engine='easyocr')
 processor = OCRProcessor(config)
+
+results = processor.process_pdf('document.pdf')
+for page_num, text in results:
+    print(f"Page {page_num}: {text}")
+
+# Using Docling
+config = OCRConfig(engine='docling', docling_format='markdown')
+processor = DoclingOCRProcessor(config)
 
 results = processor.process_pdf('document.pdf')
 for page_num, text in results:
@@ -33,5 +48,7 @@ for page_num, text in results:
 
 ## Configuration
 
-- `languages`: List of language codes (default: ['en'])
-- `dpi`: DPI for PDF to image conversion (default: 300)
+- `languages`: List of language codes for EasyOCR (default: ['en', 'fr'])
+- `dpi`: DPI for PDF to image conversion for EasyOCR (default: 300)
+- `engine`: OCR engine to use - 'easyocr' or 'docling' (default: 'easyocr')
+- `docling_format`: Output format for Docling - 'markdown', 'json', or 'text' (default: 'markdown')

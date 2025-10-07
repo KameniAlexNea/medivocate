@@ -1,6 +1,8 @@
 from typing import List, Optional
 
 import easyocr
+import numpy as np
+from PIL import Image
 
 from .config import OCRConfig
 from .utils import pdf_to_images, preprocess_image
@@ -56,8 +58,6 @@ class OCRProcessor:
         Returns:
             Extracted text
         """
-        import numpy as np
-        from PIL import Image
 
         img = Image.open(image_path)
         image = np.array(img)
