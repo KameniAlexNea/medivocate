@@ -10,6 +10,7 @@ from tqdm import tqdm
 from .config import OCRConfig
 from .docling_processor import DoclingOCRProcessor
 from .easyocr_processor import EasyOCRProcessor
+from .pdf_processor import PDFProcessor
 
 
 def process_document(
@@ -30,8 +31,10 @@ def process_document(
     config = config or OCRConfig()
     if config.engine == "docling":
         processor = DoclingOCRProcessor(config)
-    else:
+    elif config.engine == "easyocr":
         processor = EasyOCRProcessor(config)
+    else:  # config.engine == "pdf"
+        processor = PDFProcessor(config)
 
     try:
         # Create output folder if it doesn't exist
