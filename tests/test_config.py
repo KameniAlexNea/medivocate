@@ -1,5 +1,5 @@
 """Tests for configuration classes."""
-import pytest
+
 from unittest.mock import patch
 
 from src.config import ChunkingConfig, RAGConfig, VectorStoreConfig
@@ -19,10 +19,7 @@ class TestChunkingConfig:
     def test_custom_chunking_config(self):
         """Test custom chunking configuration."""
         config = ChunkingConfig(
-            chunk_size=300,
-            chunk_overlap=50,
-            top_n=5,
-            keyphrase_ngram_range=(1, 2)
+            chunk_size=300, chunk_overlap=50, top_n=5, keyphrase_ngram_range=(1, 2)
         )
         assert config.chunk_size == 300
         assert config.chunk_overlap == 50
@@ -45,7 +42,7 @@ class TestVectorStoreConfig:
         config = VectorStoreConfig(
             persist_directory="custom/db",
             batch_size=32,
-            collection_name="test_collection"
+            collection_name="test_collection",
         )
         assert config.persist_directory == "custom/db"
         assert config.batch_size == 32
@@ -89,7 +86,7 @@ class TestRAGConfig:
             chunk_overlap=50,
             temperature=0.5,
             max_tokens=500,
-            keyphrase_top_n=5
+            keyphrase_top_n=5,
         )
 
         assert config.docs_dir == "custom/docs"
@@ -117,7 +114,7 @@ class TestRAGConfig:
             "RAG_CHUNK_OVERLAP": "50",
             "RAG_TEMPERATURE": "0.5",
             "RAG_MAX_TOKENS": "500",
-            "RAG_KEYPHRASE_TOP_N": "5"
+            "RAG_KEYPHRASE_TOP_N": "5",
         }
 
         with patch.dict(os.environ, env_vars):
