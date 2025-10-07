@@ -49,7 +49,7 @@ class TestBaseVectorStoreManager:
 class TestVectorStoreManager:
     """Test single vector store manager."""
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.vector_store.Chroma')
     def test_initialization(self, mock_chroma, mock_embedding):
         """Test VectorStoreManager initialization."""
@@ -62,7 +62,7 @@ class TestVectorStoreManager:
         assert isinstance(manager.vector_stores, dict)
         assert "chroma" in manager.vector_stores
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.vector_store.Chroma')
     def test_initialize_chroma_store(self, mock_chroma, mock_embedding):
         """Test Chroma store initialization."""
@@ -83,7 +83,7 @@ class TestVectorStoreManager:
         )
         assert manager.vector_stores["chroma"] == mock_chroma_instance
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.vector_store.Chroma')
     def test_add_chroma_documents(self, mock_chroma, mock_embedding):
         """Test adding documents to Chroma store."""
@@ -98,7 +98,7 @@ class TestVectorStoreManager:
 
         mock_chroma_instance.add_documents.assert_called_once_with(documents)
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.vector_store.Chroma')
     def test_initialize_vector_store_with_documents(self, mock_chroma, mock_embedding):
         """Test initializing vector store with documents."""
@@ -113,7 +113,7 @@ class TestVectorStoreManager:
             mock_batch.assert_called_once_with(documents)
             assert manager.vs_initialized is True
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.vector_store.Chroma')
     def test_initialize_vector_store_without_documents(self, mock_chroma, mock_embedding):
         """Test initializing vector store without documents."""
@@ -137,7 +137,7 @@ class TestVectorStoreManager:
 class TestEnsembleVectorStoreManager:
     """Test ensemble vector store manager."""
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.bivector_store.AutoTokenizer')
     def test_initialization(self, mock_tokenizer, mock_embedding):
         """Test EnsembleVectorStoreManager initialization."""
@@ -153,7 +153,7 @@ class TestEnsembleVectorStoreManager:
         assert "bm25" in manager.vector_stores
         assert hasattr(manager, 'tokenizer')
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.bivector_store.AutoTokenizer')
     @patch('src.vector_store.bivector_store.BM25Retriever')
     def test_batch_process_documents(self, mock_bm25, mock_tokenizer, mock_embedding):
@@ -175,7 +175,7 @@ class TestEnsembleVectorStoreManager:
             )
             assert manager.vector_stores["bm25"] == mock_bm25_instance
 
-    @patch('src.utilities.llm_models.get_llm_model_embedding')
+    @patch('src.vector_store.base_vector_store.get_llm_model_embedding')
     @patch('src.vector_store.bivector_store.AutoTokenizer')
     @patch('src.vector_store.bivector_store.Chroma')
     @patch('src.vector_store.bivector_store.BM25Retriever')
