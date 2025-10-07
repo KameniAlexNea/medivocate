@@ -4,20 +4,12 @@ langchain-community
 langchain-chroma
 langchain-huggingface
 langchain
-ollama
 chromadb
-# OCR
-pdf2image
-Pillow
-easyocr
-PyMuPDF
 tqdm
-keybert
 gradio
 rank_bm25
 groq
 gdown
-retriv
 tiktoken
 einops
 loguru

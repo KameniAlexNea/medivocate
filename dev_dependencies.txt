@@ -6,3 +6,8 @@ autopep8
 autoflake
 isort
 pytest-cov
+# OCR
+pdf2image
+Pillow
+easyocr
+PyMuPDF
