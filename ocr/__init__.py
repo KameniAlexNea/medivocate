@@ -1,5 +1,8 @@
-from .config import OCRConfig
-from .docling_processor import DoclingOCRProcessor
-from .easyocr_processor import EasyOCRProcessor
+from .processors import (
+    DoclingOCRProcessor,
+    EasyOCRProcessor,
+    OCRConfig,
+    PDFProcessor,
+)
 
-__all__ = ["OCRConfig", "EasyOCRProcessor", "DoclingOCRProcessor"]
+__all__ = ["OCRConfig", "EasyOCRProcessor", "DoclingOCRProcessor", "PDFProcessor"]

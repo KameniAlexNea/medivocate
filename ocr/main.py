@@ -7,10 +7,12 @@ from typing import Optional
 from loguru import logger
 from tqdm import tqdm
 
-from .config import OCRConfig
-from .docling_processor import DoclingOCRProcessor
-from .easyocr_processor import EasyOCRProcessor
-from .pdf_processor import PDFProcessor
+from .processors import (
+    DoclingOCRProcessor,
+    EasyOCRProcessor,
+    OCRConfig,
+    PDFProcessor,
+)
 
 
 def process_document(

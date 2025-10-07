@@ -22,6 +22,9 @@ python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/out
 
 # Using Docling
 python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output --engine docling
+
+# Using PyMUPDF
+python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output --engine pdf
 ```
 
 ### Python API
