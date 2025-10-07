@@ -12,3 +12,4 @@ Pillow
 easyocr
 PyMuPDF
 docling
+vllm

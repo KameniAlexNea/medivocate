@@ -64,6 +64,12 @@ if __name__ == "__main__":
         help="Path to the PDF file or folder containing PDF files",
     )
     parser.add_argument(
+        "--dpi",
+        default=300,
+        type=int,
+        help="DPI (dots per inch) for OCR processing (default: 300)",
+    )
+    parser.add_argument(
         "--output_folder",
         required=True,
         type=str,
@@ -84,11 +90,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    config = OCRConfig(
-        languages=args.languages,
-        dpi=args.dpi,
-        engine=args.engine
-    )
+    config = OCRConfig(languages=args.languages, dpi=args.dpi, engine=args.engine)
 
     if os.path.isfile(args.pdf_path):
         process_document(args.pdf_path, args.output_folder, config)

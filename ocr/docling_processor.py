@@ -1,6 +1,10 @@
 from typing import List, Optional
 
-from docling.document_converter import DocumentConverter
+from docling.datamodel import vlm_model_specs
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import VlmPipelineOptions
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.pipeline.vlm_pipeline import VlmPipeline
 
 from .config import OCRConfig
 
@@ -10,7 +14,18 @@ class DoclingOCRProcessor:
 
     def __init__(self, config: Optional[OCRConfig] = None):
         self.config = config or OCRConfig()
-        self.converter = DocumentConverter()
+        pipeline_options = VlmPipelineOptions(
+            vlm_options=vlm_model_specs.GRANITEDOCLING_VLLM,
+        )
+
+        self.converter = DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfFormatOption(
+                    pipeline_cls=VlmPipeline,
+                    pipeline_options=pipeline_options,
+                ),
+            }
+        )
 
     def process_pdf(
         self, pdf_path: str, pages: Optional[List[int]] = None
