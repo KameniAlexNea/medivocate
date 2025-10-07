@@ -13,3 +13,5 @@ gdown
 tiktoken
 einops
 loguru
+torch
+transformers
