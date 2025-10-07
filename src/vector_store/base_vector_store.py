@@ -1,8 +1,8 @@
 """Base vector store manager with common functionality."""
+
 from abc import ABC, abstractmethod
 from typing import List
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from tqdm import tqdm
 
@@ -60,7 +60,6 @@ class BaseVectorStoreManager(ABC):
         Args:
             documents (List[Document]): First batch of documents.
         """
-        pass
 
     @abstractmethod
     def _add_chroma_documents(self, documents: List[Document]):
@@ -71,7 +70,6 @@ class BaseVectorStoreManager(ABC):
         Args:
             documents (List[Document]): Documents to add.
         """
-        pass
 
     @abstractmethod
     def initialize_vector_store(self, documents: List[Document] = None):
@@ -82,7 +80,6 @@ class BaseVectorStoreManager(ABC):
         Args:
             documents (List[Document], optional): Documents to initialize with.
         """
-        pass
 
     @abstractmethod
     def create_retriever(self, llm, n_documents: int, bm25_portion: float = 0.8):
@@ -98,4 +95,3 @@ class BaseVectorStoreManager(ABC):
         Returns:
             The configured retriever.
         """
-        pass

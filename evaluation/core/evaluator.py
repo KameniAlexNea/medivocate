@@ -1,14 +1,19 @@
 """Evaluation of predictions against ground truth."""
+
 import os
 from typing import List
 
 from tqdm import tqdm
 
 from ..config import EvaluationConfig
-from ..models.evaluation_data import EvaluationResult, EvaluationMetrics
-from ..utils.file_utils import find_files_by_pattern, load_json_file, save_json_file
-from ..utils.llm_utils import get_llm_client
+from ..models.evaluation_data import EvaluationMetrics, EvaluationResult
 from ..prompts import ESCI_VALIDATOR, VALIDATOR_PROMPT_FR_CONTENT
+from ..utils.file_utils import (
+    find_files_by_pattern,
+    load_json_file,
+    save_json_file,
+)
+from ..utils.llm_utils import get_llm_client
 
 
 class Evaluator:
@@ -17,8 +22,7 @@ class Evaluator:
     def __init__(self, config: EvaluationConfig):
         self.config = config
         self.llm = get_llm_client(
-            temperature=config.temperature,
-            max_tokens=config.max_tokens
+            temperature=config.temperature, max_tokens=config.max_tokens
         )
 
     def evaluate_predictions(self) -> List[EvaluationResult]:
@@ -38,13 +42,15 @@ class Evaluator:
 
     def _load_predictions(self) -> List[dict]:
         """Load predictions with their corresponding Q&A pairs."""
-        prediction_files = find_files_by_pattern(self.config.predictions_folder, "*.txt")
+        prediction_files = find_files_by_pattern(
+            self.config.predictions_folder, "*.txt"
+        )
 
         predictions = []
         for pred_file in prediction_files:
             try:
                 # Find corresponding Q&A file
-                base_name = os.path.basename(pred_file).replace('.txt', '.json')
+                base_name = os.path.basename(pred_file).replace(".txt", ".json")
                 qa_file = os.path.join(self.config.clear_evaluation_folder, base_name)
 
                 if not os.path.exists(qa_file):
@@ -54,14 +60,16 @@ class Evaluator:
                 qa_data = load_json_file(qa_file)
                 qa_pair = qa_data  # Already a dict, will be converted to QAPair later
 
-                with open(pred_file, 'r', encoding='utf-8') as f:
+                with open(pred_file, "r", encoding="utf-8") as f:
                     predicted_answer = f.read().strip()
 
-                predictions.append({
-                    "qa_data": qa_data,
-                    "predicted_answer": predicted_answer,
-                    "prediction_file": pred_file
-                })
+                predictions.append(
+                    {
+                        "qa_data": qa_data,
+                        "predicted_answer": predicted_answer,
+                        "prediction_file": pred_file,
+                    }
+                )
 
             except Exception as e:
                 print(f"Error loading prediction {pred_file}: {e}")
@@ -78,10 +86,7 @@ class Evaluator:
         eval_prompt = self._prepare_evaluation_prompt(qa_data, predicted_answer)
 
         # Get evaluation from LLM
-        response = self.llm.invoke([
-            ("system", ESCI_VALIDATOR),
-            ("user", eval_prompt)
-        ])
+        response = self.llm.invoke([("system", ESCI_VALIDATOR), ("user", eval_prompt)])
 
         evaluation_text = response.content.strip()
 
@@ -96,8 +101,8 @@ class Evaluator:
             score=score,
             metadata={
                 "source_file": prediction["prediction_file"],
-                **qa_data.get("metadata", {})
-            }
+                **qa_data.get("metadata", {}),
+            },
         )
 
     def _prepare_evaluation_prompt(self, qa_data: dict, predicted_answer: str) -> str:
@@ -106,7 +111,7 @@ class Evaluator:
             question=qa_data["question"],
             expected_answer=qa_data["answer"],
             predicted_answer=predicted_answer,
-            context=qa_data.get("context", "")
+            context=qa_data.get("context", ""),
         )
 
     def _parse_evaluation(self, evaluation_text: str) -> tuple[str, float]:
@@ -118,7 +123,8 @@ class Evaluator:
         score = None
         if "score:" in text_lower or "note:" in text_lower:
             import re
-            score_match = re.search(r'(?:score|note):\s*(\d+(?:\.\d+)?)', text_lower)
+
+            score_match = re.search(r"(?:score|note):\s*(\d+(?:\.\d+)?)", text_lower)
             if score_match:
                 score = float(score_match.group(1))
                 # Normalize to 0-1 scale if needed
@@ -153,19 +159,20 @@ class Evaluator:
         os.makedirs(self.config.results_folder, exist_ok=True)
 
         # Save detailed results
-        results_file = os.path.join(self.config.results_folder, "evaluation_results.json")
+        results_file = os.path.join(
+            self.config.results_folder, "evaluation_results.json"
+        )
         results_data = {
-            "metadata": {
-                "total_results": len(results),
-                "config": self.config.__dict__
-            },
+            "metadata": {"total_results": len(results), "config": self.config.__dict__},
             "results": [result.to_dict() for result in results],
-            "metrics": metrics.to_dict()
+            "metrics": metrics.to_dict(),
         }
         save_json_file(results_file, results_data)
 
         # Save summary
-        summary_file = os.path.join(self.config.results_folder, "evaluation_summary.json")
+        summary_file = os.path.join(
+            self.config.results_folder, "evaluation_summary.json"
+        )
         save_json_file(summary_file, metrics.to_dict())
 
         print(f"Evaluation complete. Results saved to {self.config.results_folder}")

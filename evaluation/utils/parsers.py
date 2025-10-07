@@ -1,9 +1,7 @@
 """Parsing utilities for evaluation data."""
-import json
-import re
-from typing import Dict, List, Tuple, Any
 
-from .file_utils import load_json_file, load_text_file
+import json
+from typing import Any, Dict
 
 
 def parse_evaluation_result(raw_evaluation: str) -> Dict[str, Any]:
@@ -22,11 +20,7 @@ def parse_evaluation_result(raw_evaluation: str) -> Dict[str, Any]:
         return result
     except (json.JSONDecodeError, KeyError) as e:
         # Fallback: return basic structure
-        return {
-            "evaluation": "parsing_error",
-            "error": str(e),
-            "raw": raw_evaluation
-        }
+        return {"evaluation": "parsing_error", "error": str(e), "raw": raw_evaluation}
 
 
 def extract_score_from_evaluation(evaluation_text: str) -> str:

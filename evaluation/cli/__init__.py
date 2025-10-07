@@ -1,13 +1,13 @@
 """Command-line interface for evaluation package."""
+
 import argparse
 import sys
 from pathlib import Path
 
 from ..config import EvaluationConfig
 from ..core.data_generator import DataGenerator
-from ..core.predictor import Predictor
 from ..core.evaluator import Evaluator
-from ..core.metrics import EvaluationMetrics
+from ..core.predictor import Predictor
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -28,68 +28,122 @@ Examples:
 
   # Run full pipeline
   python -m evaluation.cli pipeline --num-questions 50 --output-dir data/evaluation
-        """
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Generate command
-    generate_parser = subparsers.add_parser('generate', help='Generate evaluation data')
-    generate_parser.add_argument('--num-questions', type=int, default=100,
-                                help='Number of Q&A pairs to generate')
-    generate_parser.add_argument('--output-dir', type=str, required=True,
-                                help='Output directory for generated data')
-    generate_parser.add_argument('--chunk-size', type=int, default=1000,
-                                help='Chunk size for text processing')
-    generate_parser.add_argument('--overlap', type=int, default=200,
-                                help='Overlap between chunks')
-    generate_parser.add_argument('--temperature', type=float, default=0.7,
-                                help='LLM temperature for generation')
-    generate_parser.add_argument('--max-tokens', type=int, default=1000,
-                                help='Maximum tokens for LLM responses')
+    generate_parser = subparsers.add_parser("generate", help="Generate evaluation data")
+    generate_parser.add_argument(
+        "--num-questions", type=int, default=100, help="Number of Q&A pairs to generate"
+    )
+    generate_parser.add_argument(
+        "--output-dir",
+        type=str,
+        required=True,
+        help="Output directory for generated data",
+    )
+    generate_parser.add_argument(
+        "--chunk-size", type=int, default=1000, help="Chunk size for text processing"
+    )
+    generate_parser.add_argument(
+        "--overlap", type=int, default=200, help="Overlap between chunks"
+    )
+    generate_parser.add_argument(
+        "--temperature", type=float, default=0.7, help="LLM temperature for generation"
+    )
+    generate_parser.add_argument(
+        "--max-tokens", type=int, default=1000, help="Maximum tokens for LLM responses"
+    )
 
     # Predict command
-    predict_parser = subparsers.add_parser('predict', help='Run predictions on evaluation data')
-    predict_parser.add_argument('--input-dir', type=str, required=True,
-                               help='Input directory containing evaluation data')
-    predict_parser.add_argument('--output-dir', type=str, required=True,
-                               help='Output directory for predictions')
-    predict_parser.add_argument('--temperature', type=float, default=0.1,
-                               help='LLM temperature for predictions')
-    predict_parser.add_argument('--max-tokens', type=int, default=500,
-                               help='Maximum tokens for predictions')
-    predict_parser.add_argument('--max-workers', type=int, default=4,
-                               help='Maximum number of worker threads')
+    predict_parser = subparsers.add_parser(
+        "predict", help="Run predictions on evaluation data"
+    )
+    predict_parser.add_argument(
+        "--input-dir",
+        type=str,
+        required=True,
+        help="Input directory containing evaluation data",
+    )
+    predict_parser.add_argument(
+        "--output-dir", type=str, required=True, help="Output directory for predictions"
+    )
+    predict_parser.add_argument(
+        "--temperature", type=float, default=0.1, help="LLM temperature for predictions"
+    )
+    predict_parser.add_argument(
+        "--max-tokens", type=int, default=500, help="Maximum tokens for predictions"
+    )
+    predict_parser.add_argument(
+        "--max-workers", type=int, default=4, help="Maximum number of worker threads"
+    )
 
     # Evaluate command
-    evaluate_parser = subparsers.add_parser('evaluate', help='Evaluate predictions')
-    evaluate_parser.add_argument('--predictions-dir', type=str, required=True,
-                                help='Directory containing predictions')
-    evaluate_parser.add_argument('--results-dir', type=str, required=True,
-                                help='Output directory for evaluation results')
-    evaluate_parser.add_argument('--temperature', type=float, default=0.1,
-                                help='LLM temperature for evaluation')
-    evaluate_parser.add_argument('--max-tokens', type=int, default=1000,
-                                help='Maximum tokens for evaluation responses')
+    evaluate_parser = subparsers.add_parser("evaluate", help="Evaluate predictions")
+    evaluate_parser.add_argument(
+        "--predictions-dir",
+        type=str,
+        required=True,
+        help="Directory containing predictions",
+    )
+    evaluate_parser.add_argument(
+        "--results-dir",
+        type=str,
+        required=True,
+        help="Output directory for evaluation results",
+    )
+    evaluate_parser.add_argument(
+        "--temperature", type=float, default=0.1, help="LLM temperature for evaluation"
+    )
+    evaluate_parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=1000,
+        help="Maximum tokens for evaluation responses",
+    )
 
     # Pipeline command
-    pipeline_parser = subparsers.add_parser('pipeline', help='Run full evaluation pipeline')
-    pipeline_parser.add_argument('--num-questions', type=int, default=50,
-                                help='Number of Q&A pairs to generate')
-    pipeline_parser.add_argument('--output-dir', type=str, required=True,
-                                help='Base output directory for all pipeline steps')
-    pipeline_parser.add_argument('--chunk-size', type=int, default=1000,
-                                help='Chunk size for text processing')
-    pipeline_parser.add_argument('--overlap', type=int, default=200,
-                                help='Overlap between chunks')
-    pipeline_parser.add_argument('--gen-temperature', type=float, default=0.7,
-                                help='LLM temperature for data generation')
-    pipeline_parser.add_argument('--pred-temperature', type=float, default=0.1,
-                                help='LLM temperature for predictions')
-    pipeline_parser.add_argument('--eval-temperature', type=float, default=0.1,
-                                help='LLM temperature for evaluation')
-    pipeline_parser.add_argument('--max-workers', type=int, default=4,
-                                help='Maximum number of worker threads')
+    pipeline_parser = subparsers.add_parser(
+        "pipeline", help="Run full evaluation pipeline"
+    )
+    pipeline_parser.add_argument(
+        "--num-questions", type=int, default=50, help="Number of Q&A pairs to generate"
+    )
+    pipeline_parser.add_argument(
+        "--output-dir",
+        type=str,
+        required=True,
+        help="Base output directory for all pipeline steps",
+    )
+    pipeline_parser.add_argument(
+        "--chunk-size", type=int, default=1000, help="Chunk size for text processing"
+    )
+    pipeline_parser.add_argument(
+        "--overlap", type=int, default=200, help="Overlap between chunks"
+    )
+    pipeline_parser.add_argument(
+        "--gen-temperature",
+        type=float,
+        default=0.7,
+        help="LLM temperature for data generation",
+    )
+    pipeline_parser.add_argument(
+        "--pred-temperature",
+        type=float,
+        default=0.1,
+        help="LLM temperature for predictions",
+    )
+    pipeline_parser.add_argument(
+        "--eval-temperature",
+        type=float,
+        default=0.1,
+        help="LLM temperature for evaluation",
+    )
+    pipeline_parser.add_argument(
+        "--max-workers", type=int, default=4, help="Maximum number of worker threads"
+    )
 
     return parser
 
@@ -104,13 +158,13 @@ def main():
         sys.exit(1)
 
     try:
-        if args.command == 'generate':
+        if args.command == "generate":
             run_generate(args)
-        elif args.command == 'predict':
+        elif args.command == "predict":
             run_predict(args)
-        elif args.command == 'evaluate':
+        elif args.command == "evaluate":
             run_evaluate(args)
-        elif args.command == 'pipeline':
+        elif args.command == "pipeline":
             run_pipeline(args)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -124,7 +178,7 @@ def run_generate(args):
         chunk_size=args.chunk_size,
         overlap=args.overlap,
         temperature=args.temperature,
-        max_tokens=args.max_tokens
+        max_tokens=args.max_tokens,
     )
 
     generator = DataGenerator(config)
@@ -140,7 +194,7 @@ def run_predict(args):
         predictions_folder=args.output_dir,
         temperature=args.temperature,
         max_tokens=args.max_tokens,
-        max_workers=args.max_workers
+        max_workers=args.max_workers,
     )
 
     predictor = Predictor(config)
@@ -155,7 +209,7 @@ def run_evaluate(args):
         predictions_folder=args.predictions_dir,
         results_folder=args.results_dir,
         temperature=args.temperature,
-        max_tokens=args.max_tokens
+        max_tokens=args.max_tokens,
     )
 
     evaluator = Evaluator(config)
@@ -180,7 +234,7 @@ def run_pipeline(args):
         chunk_size=args.chunk_size,
         overlap=args.overlap,
         temperature=args.gen_temperature,
-        max_tokens=1000
+        max_tokens=1000,
     )
     generator = DataGenerator(gen_config)
     generator.generate_evaluation_data(args.num_questions)
@@ -192,7 +246,7 @@ def run_pipeline(args):
         predictions_folder=str(pred_dir),
         temperature=args.pred_temperature,
         max_tokens=500,
-        max_workers=args.max_workers
+        max_workers=args.max_workers,
     )
     predictor = Predictor(pred_config)
     predictor.run_predictions()
@@ -203,7 +257,7 @@ def run_pipeline(args):
         predictions_folder=str(pred_dir),
         results_folder=str(results_dir),
         temperature=args.eval_temperature,
-        max_tokens=1000
+        max_tokens=1000,
     )
     evaluator = Evaluator(eval_config)
     results = evaluator.evaluate_predictions()
@@ -214,5 +268,5 @@ def run_pipeline(args):
     metrics.print_summary()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

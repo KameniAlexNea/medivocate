@@ -7,7 +7,6 @@ from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from transformers import AutoTokenizer
 
-from ..config import VectorStoreConfig
 from .base_vector_store import BaseVectorStoreManager
 from .prompts import DEFAULT_QUERY_PROMPT
 

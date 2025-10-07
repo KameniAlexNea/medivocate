@@ -1,7 +1,7 @@
 """Metrics calculation for evaluation results."""
-from typing import List, Dict, Any
+
 from collections import Counter
-import json
+from typing import Any, Dict
 
 
 class EvaluationMetrics:
@@ -54,7 +54,9 @@ class EvaluationMetrics:
             return
 
         self.accuracy = (self.correct_answers / self.total_questions) * 100
-        self.average_score = sum(score for score in self.scores if score is not None) / len([s for s in self.scores if s is not None])
+        self.average_score = sum(
+            score for score in self.scores if score is not None
+        ) / len([s for s in self.scores if s is not None])
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert metrics to dictionary."""
@@ -64,10 +66,12 @@ class EvaluationMetrics:
             "total_questions": self.total_questions,
             "correct_answers": self.correct_answers,
             "accuracy": round(self.accuracy, 2),
-            "average_score": round(self.average_score, 3) if self.average_score else None,
+            "average_score": (
+                round(self.average_score, 3) if self.average_score else None
+            ),
             "score_distribution": dict(self.score_distribution),
             "evaluation_distribution": dict(self.evaluation_distribution),
-            "score_percentiles": self._calculate_percentiles()
+            "score_percentiles": self._calculate_percentiles(),
         }
 
     def _calculate_percentiles(self) -> Dict[str, float]:
@@ -86,7 +90,9 @@ class EvaluationMetrics:
             f = int(k)
             c = k - f
             if f + 1 < len(valid_scores):
-                return round(valid_scores[f] + c * (valid_scores[f + 1] - valid_scores[f]), 3)
+                return round(
+                    valid_scores[f] + c * (valid_scores[f + 1] - valid_scores[f]), 3
+                )
             else:
                 return round(valid_scores[f], 3)
 
@@ -95,20 +101,24 @@ class EvaluationMetrics:
             "50th_percentile": percentile(50),
             "75th_percentile": percentile(75),
             "90th_percentile": percentile(90),
-            "95th_percentile": percentile(95)
+            "95th_percentile": percentile(95),
         }
 
     def print_summary(self):
         """Print a summary of the metrics."""
         self.calculate_metrics()
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("EVALUATION METRICS SUMMARY")
-        print("="*50)
+        print("=" * 50)
         print(f"Total Questions: {self.total_questions}")
         print(f"Correct Answers: {self.correct_answers}")
         print(f"Accuracy: {self.accuracy:.2f}%")
-        print(f"Average Score: {self.average_score:.3f}" if self.average_score else "Average Score: N/A")
+        print(
+            f"Average Score: {self.average_score:.3f}"
+            if self.average_score
+            else "Average Score: N/A"
+        )
 
         print("\nScore Distribution:")
         for category, count in sorted(self.score_distribution.items()):
@@ -126,4 +136,4 @@ class EvaluationMetrics:
             for p, value in percentiles.items():
                 print(f"  {p}: {value}")
 
-        print("="*50)
+        print("=" * 50)

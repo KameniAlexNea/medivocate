@@ -1,13 +1,10 @@
 import io
-import logging
 from typing import List, Optional
 
 import cv2
 import numpy as np
 import pymupdf
 from PIL import Image
-
-logger = logging.getLogger(__name__)
 
 
 def pdf_to_images(

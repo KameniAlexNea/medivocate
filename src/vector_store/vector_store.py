@@ -4,7 +4,6 @@ from langchain.retrievers import MultiQueryRetriever
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from ..config import VectorStoreConfig
 from .base_vector_store import BaseVectorStoreManager
 from .document_loader import DocumentLoader
 from .prompts import DEFAULT_QUERY_PROMPT

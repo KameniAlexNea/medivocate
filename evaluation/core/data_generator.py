@@ -1,4 +1,5 @@
 """Data generation for evaluation."""
+
 import json
 import os
 import random
@@ -9,9 +10,14 @@ from tqdm import tqdm
 
 from ..config import EvaluationConfig
 from ..models.evaluation_data import QAPair
-from ..utils.file_utils import find_files_by_pattern, load_json_file, load_text_file, save_json_file
-from ..utils.llm_utils import get_llm_client
 from ..prompts import OPEN_QUESTION_PROMPT
+from ..utils.file_utils import (
+    find_files_by_pattern,
+    load_json_file,
+    load_text_file,
+    save_json_file,
+)
+from ..utils.llm_utils import get_llm_client
 
 
 class DataGenerator:
@@ -20,8 +26,7 @@ class DataGenerator:
     def __init__(self, config: EvaluationConfig):
         self.config = config
         self.llm = get_llm_client(
-            temperature=config.temperature,
-            max_tokens=config.max_tokens
+            temperature=config.temperature, max_tokens=config.max_tokens
         )
 
     def generate_evaluation_data(self) -> List[QAPair]:
@@ -55,9 +60,9 @@ class DataGenerator:
 
     def _load_file_content(self, file_path: str) -> str:
         """Load content from file."""
-        if file_path.endswith('.txt'):
+        if file_path.endswith(".txt"):
             return load_text_file(file_path)
-        elif file_path.endswith('.json'):
+        elif file_path.endswith(".json"):
             data = load_json_file(file_path)
             return data.get("kwargs", {}).get("page_content", str(data))
         else:
@@ -70,12 +75,19 @@ class DataGenerator:
 
     def _generate_qa_from_content(self, content: str, file_path: str) -> List[QAPair]:
         """Generate Q&A pairs from content using LLM."""
-        prompt = OPEN_QUESTION_PROMPT.format(content=content[:2000])  # Limit content length
+        prompt = OPEN_QUESTION_PROMPT.format(
+            content=content[:2000]
+        )  # Limit content length
 
-        response = self.llm.invoke([
-            ("system", "You are a helpful assistant that generates questions and answers from text."),
-            ("user", prompt)
-        ])
+        response = self.llm.invoke(
+            [
+                (
+                    "system",
+                    "You are a helpful assistant that generates questions and answers from text.",
+                ),
+                ("user", prompt),
+            ]
+        )
 
         # Parse the response (assuming it returns structured data)
         try:
@@ -87,7 +99,7 @@ class DataGenerator:
                 qa_pair.metadata = {
                     "source_file": file_path,
                     "generated_id": str(uuid.uuid4()),
-                    **qa_pair.metadata
+                    **qa_pair.metadata,
                 }
                 qa_pairs.append(qa_pair)
 
@@ -102,9 +114,9 @@ class DataGenerator:
         # based on the actual LLM response format
         try:
             # Try to parse as JSON first
-            if response.strip().startswith('['):
+            if response.strip().startswith("["):
                 return json.loads(response)
-            elif response.strip().startswith('{'):
+            elif response.strip().startswith("{"):
                 data = json.loads(response)
                 return [data] if isinstance(data, dict) else data
             else:
@@ -118,27 +130,31 @@ class DataGenerator:
         import re
 
         # Simple regex patterns (would need to be more sophisticated)
-        question_pattern = r'Question:?\s*(.*?)(?=Answer:|$)'
-        answer_pattern = r'Answer:?\s*(.*?)(?=Question:|$)'
+        question_pattern = r"Question:?\s*(.*?)(?=Answer:|$)"
+        answer_pattern = r"Answer:?\s*(.*?)(?=Question:|$)"
 
         questions = re.findall(question_pattern, response, re.IGNORECASE | re.DOTALL)
         answers = re.findall(answer_pattern, response, re.IGNORECASE | re.DOTALL)
 
         qa_pairs = []
         for q, a in zip(questions, answers):
-            qa_pairs.append({
-                "question": q.strip(),
-                "answer": a.strip(),
-                "context": None,
-                "metadata": {}
-            })
+            qa_pairs.append(
+                {
+                    "question": q.strip(),
+                    "answer": a.strip(),
+                    "context": None,
+                    "metadata": {},
+                }
+            )
 
         return qa_pairs
 
     def save_evaluation_data(self, qa_pairs: List[QAPair], output_file: str = None):
         """Save generated Q&A pairs to file."""
         if output_file is None:
-            output_file = os.path.join(self.config.output_folder, "evaluation_data.json")
+            output_file = os.path.join(
+                self.config.output_folder, "evaluation_data.json"
+            )
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -146,9 +162,9 @@ class DataGenerator:
             "metadata": {
                 "total_pairs": len(qa_pairs),
                 "config": self.config.__dict__,
-                "generated_at": str(uuid.uuid4())
+                "generated_at": str(uuid.uuid4()),
             },
-            "qa_pairs": [pair.to_dict() for pair in qa_pairs]
+            "qa_pairs": [pair.to_dict() for pair in qa_pairs],
         }
 
         save_json_file(output_file, data)

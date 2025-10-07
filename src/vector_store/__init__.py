@@ -1,8 +1,8 @@
 """Vector store management package."""
 
 from .base_vector_store import BaseVectorStoreManager
-from .vector_store import VectorStoreManager
 from .bivector_store import EnsembleVectorStoreManager
+from .vector_store import VectorStoreManager
 
 __all__ = [
     "BaseVectorStoreManager",

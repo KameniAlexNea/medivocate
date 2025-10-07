@@ -1,4 +1,3 @@
-from loguru import logger
 import os
 from typing import Generator, List, Optional
 
@@ -11,6 +10,7 @@ from langchain.chains.history_aware_retriever import (
 )
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.documents import Document
+from loguru import logger
 
 from ..config import RAGConfig
 from ..utilities.llm_models import get_llm_model_chat

@@ -1,4 +1,5 @@
 """Configuration management for the evaluation system."""
+
 import os
 from dataclasses import dataclass
 
@@ -32,9 +33,13 @@ class EvaluationConfig:
         return cls(
             input_folder=os.getenv("EVAL_INPUT_FOLDER", "data/chunks"),
             output_folder=os.getenv("EVAL_OUTPUT_FOLDER", "data/evaluation"),
-            predictions_folder=os.getenv("EVAL_PREDICTIONS_FOLDER", "data/llm_eval_predictions"),
+            predictions_folder=os.getenv(
+                "EVAL_PREDICTIONS_FOLDER", "data/llm_eval_predictions"
+            ),
             results_folder=os.getenv("EVAL_RESULTS_FOLDER", "data/evaluation_results"),
-            clear_evaluation_folder=os.getenv("EVAL_CLEAR_FOLDER", "data/clear_evaluation"),
+            clear_evaluation_folder=os.getenv(
+                "EVAL_CLEAR_FOLDER", "data/clear_evaluation"
+            ),
             n_files=int(os.getenv("EVAL_N_FILES", "250")),
             file_type=os.getenv("EVAL_FILE_TYPE", "json"),
             max_workers=int(os.getenv("EVAL_MAX_WORKERS", "2")),

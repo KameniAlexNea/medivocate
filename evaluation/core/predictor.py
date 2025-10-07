@@ -1,4 +1,5 @@
 """Prediction generation for evaluation."""
+
 import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
@@ -7,7 +8,11 @@ from tqdm import tqdm
 
 from ..config import EvaluationConfig
 from ..models.evaluation_data import QAPair
-from ..utils.file_utils import find_files_by_pattern, load_json_file, save_text_file
+from ..utils.file_utils import (
+    find_files_by_pattern,
+    load_json_file,
+    save_text_file,
+)
 from ..utils.llm_utils import get_rag_system
 
 
@@ -44,7 +49,9 @@ class Predictor:
 
     def _load_evaluation_data(self) -> List[QAPair]:
         """Load evaluation data from files."""
-        eval_files = find_files_by_pattern(self.config.clear_evaluation_folder, "*.json")
+        eval_files = find_files_by_pattern(
+            self.config.clear_evaluation_folder, "*.json"
+        )
 
         qa_pairs = []
         for file_path in eval_files:
@@ -72,20 +79,20 @@ class Predictor:
             return {
                 "qa_pair": qa_pair,
                 "predicted_answer": predicted_answer,
-                "prediction_file": filepath
+                "prediction_file": filepath,
             }
 
         except Exception as e:
-            print(f"Error generating prediction for question '{qa_pair.question[:50]}...': {e}")
-            return {
-                "qa_pair": qa_pair,
-                "predicted_answer": "",
-                "error": str(e)
-            }
+            print(
+                f"Error generating prediction for question '{qa_pair.question[:50]}...': {e}"
+            )
+            return {"qa_pair": qa_pair, "predicted_answer": "", "error": str(e)}
 
     def load_existing_predictions(self) -> List[dict]:
         """Load existing predictions from files."""
-        prediction_files = find_files_by_pattern(self.config.predictions_folder, "*.txt")
+        prediction_files = find_files_by_pattern(
+            self.config.predictions_folder, "*.txt"
+        )
 
         predictions = []
         for file_path in prediction_files:
@@ -93,19 +100,21 @@ class Predictor:
                 filename = os.path.basename(file_path)
                 qa_file = os.path.join(
                     self.config.clear_evaluation_folder,
-                    filename.replace('.txt', '.json')
+                    filename.replace(".txt", ".json"),
                 )
 
                 if os.path.exists(qa_file):
                     qa_data = load_json_file(qa_file)
                     qa_pair = QAPair.from_dict(qa_data)
-                    predicted_answer = open(file_path, 'r', encoding='utf-8').read()
+                    predicted_answer = open(file_path, "r", encoding="utf-8").read()
 
-                    predictions.append({
-                        "qa_pair": qa_pair,
-                        "predicted_answer": predicted_answer,
-                        "prediction_file": file_path
-                    })
+                    predictions.append(
+                        {
+                            "qa_pair": qa_pair,
+                            "predicted_answer": predicted_answer,
+                            "prediction_file": file_path,
+                        }
+                    )
 
             except Exception as e:
                 print(f"Error loading prediction {file_path}: {e}")

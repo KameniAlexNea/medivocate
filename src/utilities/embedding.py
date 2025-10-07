@@ -1,10 +1,10 @@
-from loguru import logger
 import os
 from typing import Any, List
 
 import torch
 from langchain_core.embeddings import Embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
+from loguru import logger
 from pydantic import BaseModel, Field
 
 

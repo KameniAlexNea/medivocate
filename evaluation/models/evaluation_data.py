@@ -1,11 +1,13 @@
 """Data models for evaluation system."""
+
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 from enum import Enum
+from typing import Dict, Optional
 
 
 class EvaluationScore(Enum):
     """Evaluation score categories."""
+
     EXCELLENT = "excellent"
     GOOD = "good"
     ACCEPTABLE = "acceptable"
@@ -16,6 +18,7 @@ class EvaluationScore(Enum):
 @dataclass
 class QAPair:
     """Question-Answer pair data structure."""
+
     question: str
     answer: str
     context: Optional[str] = None
@@ -51,6 +54,7 @@ class QAPair:
 @dataclass
 class EvaluationResult:
     """Evaluation result data structure."""
+
     question: str
     expected_answer: str
     predicted_answer: str
@@ -86,12 +90,15 @@ class EvaluationResult:
         """Check if the prediction is considered correct."""
         if self.score is not None:
             return self.score >= 0.7  # Threshold for correctness
-        return "excellent" in self.evaluation.lower() or "good" in self.evaluation.lower()
+        return (
+            "excellent" in self.evaluation.lower() or "good" in self.evaluation.lower()
+        )
 
 
 @dataclass
 class EvaluationMetrics:
     """Aggregated evaluation metrics."""
+
     total_questions: int = 0
     correct_answers: int = 0
     average_score: float = 0.0
@@ -104,7 +111,11 @@ class EvaluationMetrics:
     @property
     def accuracy(self) -> float:
         """Calculate accuracy percentage."""
-        return (self.correct_answers / self.total_questions) * 100 if self.total_questions > 0 else 0.0
+        return (
+            (self.correct_answers / self.total_questions) * 100
+            if self.total_questions > 0
+            else 0.0
+        )
 
     def add_result(self, result: EvaluationResult):
         """Add a result to the metrics."""
@@ -114,7 +125,9 @@ class EvaluationMetrics:
 
         # Update score distribution
         score_category = self._categorize_score(result.score)
-        self.score_distribution[score_category] = self.score_distribution.get(score_category, 0) + 1
+        self.score_distribution[score_category] = (
+            self.score_distribution.get(score_category, 0) + 1
+        )
 
         # Recalculate average
         self._update_average()
@@ -148,6 +161,7 @@ class EvaluationMetrics:
             "average_score": self.average_score,
             "score_distribution": self.score_distribution,
         }
+
     score: Optional[EvaluationScore] = None
     metadata: Optional[Dict] = None
 
@@ -178,6 +192,7 @@ class EvaluationMetrics:
 @dataclass
 class EvaluationMetrics:
     """Aggregated evaluation metrics."""
+
     total_evaluations: int = 0
     score_distribution: Dict[EvaluationScore, int] = None
     average_score: Optional[float] = None

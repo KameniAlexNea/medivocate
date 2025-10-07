@@ -1,12 +1,9 @@
-import logging
 from typing import List, Optional
 
 import easyocr
 
 from .config import OCRConfig
 from .utils import pdf_to_images, preprocess_image
-
-logger = logging.getLogger(__name__)
 
 
 class OCRProcessor:

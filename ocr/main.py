@@ -1,16 +1,14 @@
-import logging
 import os
 from argparse import ArgumentParser
 from glob import glob
 from pathlib import Path
 from typing import Optional
 
+from loguru import logger
 from tqdm import tqdm
 
 from .config import OCRConfig
 from .ocr import OCRProcessor
-
-logging.basicConfig(level=logging.INFO)
 
 
 def process_document(
@@ -25,7 +23,7 @@ def process_document(
         config: OCR configuration
     """
     if not file_path.lower().endswith(".pdf"):
-        logging.warning(f"Skipping non-PDF file: {file_path}")
+        logger.warning(f"Skipping non-PDF file: {file_path}")
         return
 
     config = config or OCRConfig()
@@ -46,10 +44,10 @@ def process_document(
             )
             with open(output_file_path, "w", encoding="utf-8") as output_file:
                 output_file.write(text)
-            logging.info(f"Output saved to: {output_file_path}")
+            logger.info(f"Output saved to: {output_file_path}")
 
     except Exception as e:
-        logging.error(f"Error processing file '{file_path}': {str(e)}")
+        logger.error(f"Error processing file '{file_path}': {str(e)}")
         raise
 
 
@@ -89,7 +87,7 @@ if __name__ == "__main__":
     else:
         pdf_files = glob(os.path.join(args.pdf_path, "*.pdf"))
         if not pdf_files:
-            logging.error("No PDF files found in the specified folder")
+            logger.error("No PDF files found in the specified folder")
             exit(1)
 
         for pdf_file in tqdm(pdf_files):

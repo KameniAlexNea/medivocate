@@ -1,8 +1,9 @@
-from loguru import logger
 import os
 import shutil
 import subprocess
 import zipfile
+
+from loguru import logger
 
 
 def download_and_prepare_data(gdrive_url, zip_filename, extract_to, target_folder):
