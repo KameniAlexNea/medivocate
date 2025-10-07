@@ -9,7 +9,6 @@ class OCRConfig:
     languages: List[str] = None
     dpi: int = 300
     engine: str = "easyocr"  # "easyocr" or "docling"
-    docling_format: str = "markdown"  # "markdown", "json", "text"
 
     def __post_init__(self):
         if self.languages is None:

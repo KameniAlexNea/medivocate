@@ -76,22 +76,10 @@ if __name__ == "__main__":
         help="Languages for OCR (default: en)",
     )
     parser.add_argument(
-        "--dpi",
-        type=int,
-        default=300,
-        help="DPI for PDF to image conversion (default: 300)",
-    )
-    parser.add_argument(
         "--engine",
         choices=["easyocr", "docling"],
         default="easyocr",
         help="OCR engine to use (default: easyocr)",
-    )
-    parser.add_argument(
-        "--docling_format",
-        choices=["markdown", "json", "text"],
-        default="markdown",
-        help="Output format for Docling (default: markdown)",
     )
 
     args = parser.parse_args()
@@ -99,8 +87,7 @@ if __name__ == "__main__":
     config = OCRConfig(
         languages=args.languages,
         dpi=args.dpi,
-        engine=args.engine,
-        docling_format=args.docling_format,
+        engine=args.engine
     )
 
     if os.path.isfile(args.pdf_path):

@@ -27,21 +27,22 @@ class DoclingOCRProcessor:
         # Convert document using Docling
         result = self.converter.convert(pdf_path)
 
-        # Export based on configured format
-        if self.config.docling_format == "markdown":
-            full_text = result.document.export_to_markdown()
-        elif self.config.docling_format == "json":
-            full_text = result.document.export_to_dict()
-            # Convert dict to string representation
-            import json
+        # Export to markdown with page break placeholders
+        page_break_placeholder = "\n---PAGE_BREAK---\n"
+        full_markdown = result.document.export_to_markdown(
+            page_break_placeholder=page_break_placeholder
+        )
 
-            full_text = json.dumps(full_text, indent=2, ensure_ascii=False)
-        else:  # text
-            full_text = result.document.export_to_text()
+        # Split by page break placeholder to get individual pages
+        page_texts = full_markdown.split(page_break_placeholder)
 
-        # For now, return as single page since Docling processes the whole document
-        # In the future, we could split by pages if needed
-        return [(0, full_text)]
+        # Return list of (page_number, text) tuples
+        results = []
+        for page_num, page_text in enumerate(page_texts):
+            if page_text.strip():  # Only include non-empty pages
+                results.append((page_num, page_text.strip()))
+
+        return results
 
     def process_image(self, image_path: str) -> str:
         """Process single image file using Docling.
@@ -55,13 +56,5 @@ class DoclingOCRProcessor:
         # Docling can handle images directly
         result = self.converter.convert(image_path)
 
-        if self.config.docling_format == "markdown":
-            return result.document.export_to_markdown()
-        elif self.config.docling_format == "json":
-            import json
-
-            return json.dumps(
-                result.document.export_to_dict(), indent=2, ensure_ascii=False
-            )
-        else:  # text
-            return result.document.export_to_text()
+        # Always export to markdown for consistency
+        return result.document.export_to_markdown()

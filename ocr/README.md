@@ -21,7 +21,7 @@ A flexible OCR package for extracting text from PDF files and images using multi
 python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output
 
 # Using Docling
-python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output --engine docling --docling_format markdown
+python -m ocr.main --pdf_path /path/to/document.pdf --output_folder /path/to/output --engine docling
 ```
 
 ### Python API
@@ -38,7 +38,7 @@ for page_num, text in results:
     print(f"Page {page_num}: {text}")
 
 # Using Docling
-config = OCRConfig(engine='docling', docling_format='markdown')
+config = OCRConfig(engine='docling')
 processor = DoclingOCRProcessor(config)
 
 results = processor.process_pdf('document.pdf')
@@ -51,4 +51,3 @@ for page_num, text in results:
 - `languages`: List of language codes for EasyOCR (default: ['en', 'fr'])
 - `dpi`: DPI for PDF to image conversion for EasyOCR (default: 300)
 - `engine`: OCR engine to use - 'easyocr' or 'docling' (default: 'easyocr')
-- `docling_format`: Output format for Docling - 'markdown', 'json', or 'text' (default: 'markdown')
