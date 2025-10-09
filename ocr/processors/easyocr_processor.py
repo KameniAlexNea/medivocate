@@ -3,7 +3,7 @@ from typing import List, Optional
 import easyocr
 import numpy as np
 from PIL import Image
-
+import torch
 from .config import OCRConfig
 from ..utils import pdf_to_images, preprocess_image
 
@@ -17,12 +17,7 @@ class EasyOCRProcessor:
 
     @staticmethod
     def _check_gpu() -> bool:
-        try:
-            import torch
-
-            return torch.cuda.is_available()
-        except ImportError:
-            return False
+        return torch.cuda.is_available()
 
     def process_pdf(
         self, pdf_path: str, pages: Optional[List[int]] = None

@@ -16,7 +16,7 @@ from .processors import (
 
 
 def process_document(
-    file_path: str, output_folder: str, config: Optional[OCRConfig] = None
+    file_path: str, output_folder: str, processor
 ):
     """
     Process a document with OCR and save the result to the output folder.
@@ -29,14 +29,6 @@ def process_document(
     if not file_path.lower().endswith(".pdf"):
         logger.warning(f"Skipping non-PDF file: {file_path}")
         return
-
-    config = config or OCRConfig()
-    if config.engine == "docling":
-        processor = DoclingOCRProcessor(config)
-    elif config.engine == "easyocr":
-        processor = EasyOCRProcessor(config)
-    else:  # config.engine == "pdf"
-        processor = PDFProcessor(config)
 
     try:
         # Create output folder if it doesn't exist
@@ -97,8 +89,16 @@ if __name__ == "__main__":
 
     config = OCRConfig(languages=args.languages, dpi=args.dpi, engine=args.engine)
 
+    # Create processor once
+    if config.engine == "docling":
+        processor = DoclingOCRProcessor(config)
+    elif config.engine == "easyocr":
+        processor = EasyOCRProcessor(config)
+    else:  # config.engine == "pdf"
+        processor = PDFProcessor(config)
+
     if os.path.isfile(args.pdf_path):
-        process_document(args.pdf_path, args.output_folder, config)
+        process_document(args.pdf_path, args.output_folder, processor)
     else:
         pdf_files = glob(os.path.join(args.pdf_path, "*.pdf"))
         if not pdf_files:
@@ -112,4 +112,4 @@ if __name__ == "__main__":
                 and len(os.listdir(output_subfolder)) > 0
             ):
                 continue
-            process_document(pdf_file, output_subfolder, config)
+            process_document(pdf_file, output_subfolder, processor)
