@@ -88,7 +88,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--engine",
-        choices=["easyocr", "docling"],
+        choices=["easyocr", "docling", "pdf"],
         default="easyocr",
         help="OCR engine to use (default: easyocr)",
     )
@@ -107,4 +107,9 @@ if __name__ == "__main__":
 
         for pdf_file in tqdm(pdf_files):
             output_subfolder = os.path.join(args.output_folder, Path(pdf_file).stem)
+            if (
+                os.path.exists(output_subfolder)
+                and len(os.listdir(output_subfolder)) > 0
+            ):
+                continue
             process_document(pdf_file, output_subfolder, config)

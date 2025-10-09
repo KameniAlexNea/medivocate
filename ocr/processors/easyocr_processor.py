@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from .config import OCRConfig
-from .utils import pdf_to_images, preprocess_image
+from ..utils import pdf_to_images, preprocess_image
 
 
 class EasyOCRProcessor:
